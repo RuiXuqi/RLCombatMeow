@@ -138,12 +138,9 @@ public class EventHandlersClient
                 if( sht != null && sht.getHurtTimerBCM() <= 0 ) {
                     if( shouldAttack(mov.entityHit, player) ) {
                         PacketHandler.instance.sendToServer(new PacketOffhandAttack(mov.entityHit.getEntityId()));
-                        return;
                     }
                 }
             }
-
-            PacketHandler.instance.sendToServer(new PacketOffhandAttack());
         }
     }
 

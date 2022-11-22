@@ -4,7 +4,6 @@ import bettercombat.mod.util.Helpers;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.item.ItemStack;
 import net.minecraft.network.play.server.SPacketAnimation;
 import net.minecraft.util.EnumHand;
 import net.minecraft.world.WorldServer;
@@ -16,8 +15,9 @@ import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
 
 public class PacketOffhandAttack implements IMessage
 {
-    private Integer entityId;
+    private int entityId;
 
+    @SuppressWarnings("unused")
     public PacketOffhandAttack() {}
 
     public PacketOffhandAttack(int parEntityId) {
@@ -26,17 +26,12 @@ public class PacketOffhandAttack implements IMessage
 
     @Override
     public void fromBytes(ByteBuf buf) {
-        if( buf.readBoolean() ) {
-            this.entityId = ByteBufUtils.readVarInt(buf, 4);
-        }
+        this.entityId = ByteBufUtils.readVarInt(buf, 4);
     }
 
     @Override
     public void toBytes(ByteBuf buf) {
-        buf.writeBoolean(this.entityId != null);
-        if( this.entityId != null ) {
-            ByteBufUtils.writeVarInt(buf, this.entityId, 4);
-        }
+        ByteBufUtils.writeVarInt(buf, this.entityId, 4);
     }
 
     public static class Handler
@@ -50,18 +45,11 @@ public class PacketOffhandAttack implements IMessage
 
         private static void handle(PacketOffhandAttack message, MessageContext ctx) {
             EntityPlayerMP player = ctx.getServerHandler().player;
-            if( message.entityId != null ) {
-                Entity theEntity = player.world.getEntityByID(message.entityId);
-                if( theEntity != null ) {
-                    Helpers.attackTargetEntityItem(player, theEntity, true);
-                }
-                player.swingArm(EnumHand.OFF_HAND);
-            } else {
-                ItemStack mh = player.getHeldItemMainhand();
-                player.setHeldItem(EnumHand.MAIN_HAND, player.getHeldItemOffhand());
-                player.swingArm(EnumHand.OFF_HAND);
-                player.setHeldItem(EnumHand.MAIN_HAND, mh);
+            Entity theEntity = player.world.getEntityByID(message.entityId);
+            if( theEntity != null ) {
+                Helpers.attackTargetEntityItem(player, theEntity, true);
             }
+            ((WorldServer) player.world).getEntityTracker().sendToTracking(player, new SPacketAnimation(player, 3));
         }
     }
 }
