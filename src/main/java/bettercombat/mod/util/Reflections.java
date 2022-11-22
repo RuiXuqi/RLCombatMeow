@@ -12,6 +12,7 @@ import net.minecraft.launchwrapper.Launch;
 import net.minecraft.util.DamageSource;
 import net.minecraft.util.SoundEvent;
 
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
@@ -26,6 +27,39 @@ public class Reflections
     private static Method getSoundVolume;       private static final String GSVL_SRG = "func_70599_aP";  private static final String GSVL_MCP = "getSoundVolume";
     private static Method getSoundPitch;        private static final String GSPT_SRG = "func_70647_i";   private static final String GSPT_MCP = "getSoundPitch";
     private static Method playHurtSound;        private static final String PHSD_SRG = "func_184581_c";  private static final String PHSD_MCP = "playHurtSound";
+
+    private static Field ticksSinceLastSwing;   private static final String TSLS_SRG = "field_184617_aD";private static final String TSLS_MCP = "ticksSinceLastSwing";
+
+    public static int ticksSinceLastSwing(EntityLivingBase living) {
+        try {
+            if( ticksSinceLastSwing == null ) {
+                ticksSinceLastSwing = EntityLivingBase.class.getDeclaredField(getName(TSLS_SRG, TSLS_MCP));
+                ticksSinceLastSwing.setAccessible(true);
+            }
+
+            return ticksSinceLastSwing.getInt(living);
+        } catch( NoSuchFieldException ex ) {
+            throw new RuntimeException(ex);
+        } catch( IllegalAccessException | IllegalArgumentException ex ) {
+            ex.printStackTrace();
+            return 0;
+        }
+    }
+
+    public static void setTicksSinceLastSwing(EntityLivingBase living, int value) {
+        try {
+            if( ticksSinceLastSwing == null ) {
+                ticksSinceLastSwing = EntityLivingBase.class.getDeclaredField(getName(TSLS_SRG, TSLS_MCP));
+                ticksSinceLastSwing.setAccessible(true);
+            }
+
+            ticksSinceLastSwing.setInt(living, value);
+        } catch( NoSuchFieldException ex ) {
+            throw new RuntimeException(ex);
+        } catch( IllegalAccessException | IllegalArgumentException ex ) {
+            ex.printStackTrace();
+        }
+    }
 
     public static boolean canBlockDamageSource(EntityLivingBase living, DamageSource dmgSrc) {
         try {

@@ -1,6 +1,4 @@
-# BetterCombatRebirth
-A continuation of the Better Combat mod from Ironfists for Minecraft 1.12.2 and beyond
+# RLCombat
+A fork of the Better Combat Rebirth mod for use in the modpack RLCraft
 
-Original mod: https://minecraft.curseforge.com/projects/better-combat-mod
-
-This mod is licensed under the [MIT License](https://opensource.org/licenses/MIT)
+Original mod: https://www.curseforge.com/minecraft/mc-mods/better-combat-rebirth

@@ -40,6 +40,8 @@ import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.WorldServer;
 import net.minecraftforge.common.ForgeHooks;
 import net.minecraftforge.event.ForgeEventFactory;
+import net.minecraftforge.fml.common.Loader;
+import org.apache.logging.log4j.Level;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -122,11 +124,19 @@ public final class Helpers
             if( !targetEntity.hitByEntity(player) ) {
                 float damage = offhand ? getOffhandDamage(player) : (float) player.getEntityAttribute(SharedMonsterAttributes.ATTACK_DAMAGE).getAttributeValue();
                 float cMod;
+                float oMod;
                 if( targetEntity instanceof EntityLivingBase ) {
                     cMod = EnchantmentHelper.getModifierForCreature(offhand ? player.getHeldItemOffhand() : player.getHeldItemMainhand(), ((EntityLivingBase) targetEntity).getCreatureAttribute());
-                } else {
+                }
+                else {
                     cMod = EnchantmentHelper.getModifierForCreature(offhand ? player.getHeldItemOffhand() : player.getHeldItemMainhand(), EnumCreatureAttribute.UNDEFINED);
                 }
+
+                BetterCombatMod.LOG.log(Level.INFO, "Damage values, damage: " + damage + " cMod: " + cMod);
+
+                //Post event to get any other modifies required for compat
+                //oMod = getModifierForCreature(offhand ? player.getHeldItemOffhand().getItem() : player.getHeldItemMainhand().getItem(), targetEntity);
+                oMod = 0;
 
                 int cooldown = 0;
                 float cooledStr;
@@ -137,6 +147,7 @@ public final class Helpers
                     cooledStr = player.getCooledAttackStrength(0.5F);
                 }
 
+                damage += oMod;
                 damage *= (0.2F + cooledStr * cooledStr * 0.8F);
                 cMod *= cooledStr;
                 if( offhand ) {
@@ -145,7 +156,7 @@ public final class Helpers
                     player.resetCooldown();
                 }
 
-                if( damage > 0.0F || cMod > 0.0F ) {
+                if( damage > 0.0F || cMod > 0.0F) {
                     boolean isStrong = cooledStr > 0.9F;
                     boolean knockback = false;
                     boolean isCrit;
@@ -161,11 +172,14 @@ public final class Helpers
 
                     if( ConfigurationHandler.randomCrits ) {
                         isCrit = player.getRNG().nextFloat() < ConfigurationHandler.critChance && !player.isSprinting();
+                        //Allow forced jump crits at close range
+                        if(!isCrit) isCrit = player.getDistance(targetEntity) < 2.0D && isStrong && player.fallDistance > 0.0F && !player.onGround && !player.isOnLadder() &&
+                                !player.isInWater() && !player.isPotionActive(MobEffects.BLINDNESS) && !player.isRiding() &&
+                                targetEntity instanceof EntityLivingBase && !player.isSprinting();
                     } else {
                         isCrit = isStrong && player.fallDistance > 0.0F && !player.onGround && !player.isOnLadder() && !player.isInWater()
                                          && !player.isPotionActive(MobEffects.BLINDNESS) && !player.isRiding() && targetEntity instanceof EntityLivingBase
                                          && !player.isSprinting();
-
                     }
 
                     net.minecraftforge.event.entity.player.CriticalHitEvent hitResult = net.minecraftforge.common.ForgeHooks.getCriticalHit(player, targetEntity, isCrit, isCrit ? 1.5F : 1.0F);
@@ -224,11 +238,12 @@ public final class Helpers
                             for( EntityLivingBase living : player.world.getEntitiesWithinAABB(EntityLivingBase.class, targetEntity.getEntityBoundingBox().grow(1.0D, 0.25D, 1.0D)) ) {
                                 if( living != player && living != targetEntity && !player.isOnSameTeam(living) && player.getDistanceSq(living) < 9.0D ) {
                                     living.knockBack(player, 0.4F, MathHelper.sin(player.rotationYaw * 0.017453292F), -MathHelper.cos(player.rotationYaw * 0.017453292F));
+                                    float finalDamage = damage;
                                     if( offhand ) {
                                         execNullable(targetEntity.getCapability(EventHandlers.SECONDHURTTIMER_CAP, null),
-                                                     sht -> sht.attackEntityFromOffhand(living, DamageSource.causePlayerDamage(player), 1.0F));
+                                                     sht -> sht.attackEntityFromOffhand(living, DamageSource.causePlayerDamage(player), 1.0F + EnchantmentHelper.getSweepingDamageRatio(player) * finalDamage));
                                     } else {
-                                        living.attackEntityFrom(DamageSource.causePlayerDamage(player), 1.0F);
+                                        living.attackEntityFrom(DamageSource.causePlayerDamage(player), 1.0F + EnchantmentHelper.getSweepingDamageRatio(player) * finalDamage);
                                     }
                                 }
                             }

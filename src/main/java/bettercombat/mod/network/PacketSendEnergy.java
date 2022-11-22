@@ -1,5 +1,6 @@
 package bettercombat.mod.network;
 
+import bettercombat.mod.util.Reflections;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraftforge.fml.common.FMLCommonHandler;
@@ -43,7 +44,7 @@ public class PacketSendEnergy implements IMessage
         private static void handle(PacketSendEnergy message, MessageContext ctx) {
             EntityPlayerMP playerEntity = ctx.getServerHandler().player;
             if( playerEntity != null ) {
-                playerEntity.ticksSinceLastSwing = message.amount;
+                Reflections.setTicksSinceLastSwing(playerEntity, message.amount);
             }
         }
     }

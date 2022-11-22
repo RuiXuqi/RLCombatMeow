@@ -10,6 +10,7 @@ import bettercombat.mod.network.PacketMainhandAttack;
 import bettercombat.mod.network.PacketOffhandAttack;
 import bettercombat.mod.util.ConfigurationHandler;
 import bettercombat.mod.util.Helpers;
+import bettercombat.mod.util.Reflections;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.settings.KeyBinding;
@@ -150,7 +151,7 @@ public class EventHandlersClient
 
     public static void refoundEnergy(EntityPlayer player) {
         EventHandlers.INSTANCE.giveEnergy = true;
-        EventHandlers.INSTANCE.energyToGive = player.ticksSinceLastSwing;
+        EventHandlers.INSTANCE.energyToGive = Reflections.ticksSinceLastSwing(player);
     }
 
     private static boolean shouldAttack(Entity entHit, EntityPlayer player) {
@@ -176,9 +177,9 @@ public class EventHandlersClient
         AxisAlignedBB viewBB = new AxisAlignedBB(rvEntity.posX - 0.5D, rvEntity.posY - 0.0D, rvEntity.posZ - 0.5D, rvEntity.posX + 0.5D, rvEntity.posY + 1.5D, rvEntity.posZ + 0.5D);
         if( mc.world != null ) {
             RayTraceResult traceResult = rvEntity.rayTrace(dist, 0.0F);
-            final Vec3d pos = rvEntity.getPositionEyes(0.0F).addVector(0.0D, -Helpers.execNullable(rvEntity.getRidingEntity(), Entity::getMountedYOffset, 0.0D), 0.0D);
+            final Vec3d pos = rvEntity.getPositionEyes(0.0F).add(0.0D, -Helpers.execNullable(rvEntity.getRidingEntity(), Entity::getMountedYOffset, 0.0D), 0.0D);
             final Vec3d lookVec = rvEntity.getLook(0.0F);
-            final Vec3d lookTarget = pos.addVector(lookVec.x * dist, lookVec.y * dist, lookVec.z * dist);
+            final Vec3d lookTarget = pos.add(lookVec.x * dist, lookVec.y * dist, lookVec.z * dist);
             final float growth = 1.0F;
             final List<Entity> list = mc.world.getEntitiesWithinAABBExcludingEntity(rvEntity, viewBB.expand(lookVec.x * dist, lookVec.y * dist, lookVec.z * dist).grow(growth, growth, growth));
             final double calcdist = traceResult != null ? traceResult.hitVec.distanceTo(pos) : dist;

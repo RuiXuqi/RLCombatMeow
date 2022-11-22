@@ -8,6 +8,7 @@ import bettercombat.mod.network.PacketSendEnergy;
 import bettercombat.mod.util.ConfigurationHandler;
 import bettercombat.mod.util.Helpers;
 import bettercombat.mod.util.Reference;
+import bettercombat.mod.util.Reflections;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.nbt.NBTBase;
@@ -77,8 +78,8 @@ public class EventHandlers
             }
 
             if( this.giveEnergy ) {
-                if( player.ticksSinceLastSwing == 0 ) {
-                    player.ticksSinceLastSwing = this.energyToGive;
+                if( Reflections.ticksSinceLastSwing(player) == 0 ) {
+                    Reflections.setTicksSinceLastSwing(player, this.energyToGive);
                     this.giveEnergy = false;
                     PacketHandler.instance.sendToServer(new PacketSendEnergy(this.energyToGive));
                 }
