@@ -11,8 +11,6 @@ public class DefaultImplSecondHurtTimer
         implements ISecondHurtTimer
 {
     private int hurtTime;
-    private int lastHurtTime;
-    private long lastHurtTimerSet;
 
     @Override
     public int getHurtTimerBCM() {
@@ -21,13 +19,11 @@ public class DefaultImplSecondHurtTimer
 
     @Override
     public void setHurtTimerBCM(int hurtTimer) {
-        this.lastHurtTimerSet = System.currentTimeMillis();
-        this.hurtTime = this.lastHurtTime = hurtTimer;
+        this.hurtTime = hurtTimer;
     }
 
     @Override
     public void tick() {
-        this.lastHurtTimerSet = -1;
         if( this.hurtTime > 0 ) {
             this.hurtTime -= 1;
         }
@@ -35,11 +31,6 @@ public class DefaultImplSecondHurtTimer
 
     @Override
     public boolean attackEntityFromOffhand(Entity target, DamageSource dmgSrc, float amount) {
-        // should fix attacked entities that do not tick, like dummies
-        if( this.lastHurtTimerSet >= 0 && (this.lastHurtTimerSet - System.currentTimeMillis()) > 50 ) {
-            this.hurtTime = Math.max(0, this.lastHurtTime - (int)((this.lastHurtTimerSet - System.currentTimeMillis()) / 50L));
-        }
-
         if( target.isEntityInvulnerable(dmgSrc) || this.hurtTime > 0 || target.world.isRemote || !(target instanceof EntityLivingBase) ) {
             return false;
         }

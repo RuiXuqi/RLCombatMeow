@@ -83,6 +83,10 @@ public class EventHandlersClient
             return;
         }
 
+        if( ConfigurationHandler.refoundEnergy ) {
+            refoundEnergy(player);
+        }
+
         RayTraceResult mov = getMouseOverExtended(ConfigurationHandler.longerAttack ? 5.0F : 4.0F);
         if( mov != null && mov.entityHit != null ) {
             if( mov.entityHit != player ) {
@@ -96,13 +100,7 @@ public class EventHandlersClient
 
                 player.attackTargetEntityWithCurrentItem(mov.entityHit);
                 PacketHandler.instance.sendToServer(new PacketMainhandAttack(mov.entityHit.getEntityId()));
-
-                return;
             }
-        }
-
-        if( ConfigurationHandler.refoundEnergy ) {
-            refoundEnergy(player);
         }
     }
 
@@ -120,7 +118,7 @@ public class EventHandlersClient
             }
             ItemStack stackOffHand = player.getHeldItemOffhand();
 
-            if( stackOffHand.isEmpty() || !ConfigurationHandler.isItemAttackUsable(stackOffHand.getItem(), player.getHeldItemMainhand()) ) {
+            if( stackOffHand.isEmpty() || !ConfigurationHandler.isItemAttackUsable(stackOffHand.getItem()) ) {
                 return;
             }
 

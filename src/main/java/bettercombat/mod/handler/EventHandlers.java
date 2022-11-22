@@ -76,13 +76,17 @@ public class EventHandlers
                     this.offhandCooldown = 0;
                 }
             }
+        }
 
-            if( this.giveEnergy ) {
-                if( Reflections.ticksSinceLastSwing(player) == 0 ) {
-                    Reflections.setTicksSinceLastSwing(player, this.energyToGive);
-                    this.giveEnergy = false;
-                    PacketHandler.instance.sendToServer(new PacketSendEnergy(this.energyToGive));
-                }
+        if( event.getEntityLiving() instanceof EntityPlayer && this.giveEnergy ) {
+            EntityPlayer player = (EntityPlayer) event.getEntityLiving();
+            if( player == null ) {
+                return;
+            }
+
+            if( player.ticksSinceLastSwing == 0 ) {
+                player.ticksSinceLastSwing = this.energyToGive;
+                PacketHandler.instance.sendToServer(new PacketSendEnergy(this.energyToGive));
             }
         }
     }
