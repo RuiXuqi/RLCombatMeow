@@ -6,8 +6,11 @@
  *******************************************************************************************************************/
 package bettercombat.mod.util;
 
+import bettercombat.mod.event.RLCombatCriticalHitEvent;
+import bettercombat.mod.event.RLCombatModifyDamageEvent;
 import bettercombat.mod.handler.EventHandlers;
 import bettercombat.mod.capability.CapabilityOffhandCooldown;
+import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import net.minecraft.enchantment.Enchantment;
 import net.minecraft.enchantment.EnchantmentHelper;
@@ -18,6 +21,7 @@ import net.minecraft.entity.IEntityMultiPart;
 import net.minecraft.entity.MultiPartEntityPart;
 import net.minecraft.entity.SharedMonsterAttributes;
 import net.minecraft.entity.ai.attributes.AttributeModifier;
+import net.minecraft.entity.ai.attributes.IAttributeInstance;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.init.Enchantments;
@@ -39,9 +43,11 @@ import net.minecraft.util.EnumParticleTypes;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.WorldServer;
 import net.minecraftforge.common.ForgeHooks;
+import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.ForgeEventFactory;
+import net.minecraftforge.event.entity.player.CriticalHitEvent;
 import net.minecraftforge.fml.common.Loader;
-import org.apache.logging.log4j.Level;
+import net.minecraftforge.fml.common.eventhandler.Event;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -67,26 +73,47 @@ public final class Helpers
         return orElse;
     }
 
-    public static int getOffhandCooldown(EntityPlayer player) {
-        Multimap<String, AttributeModifier> modifiers = player.getHeldItemOffhand().getAttributeModifiers(EntityEquipmentSlot.MAINHAND);
-        double speed = 4.0D;
-        for( Map.Entry<String, AttributeModifier> modifier : modifiers.entries()) {
-            if( modifier.getKey().contains("attackSpeed") ) {
-                speed = modifier.getValue().getAmount();
+    public static void clearOldModifiers(EntityLivingBase entity, ItemStack stack) {
+        if(!stack.isEmpty() && entity != null) {
+            Multimap<String, AttributeModifier> modifiersToRemove = HashMultimap.create();
+            for(Map.Entry<String, AttributeModifier> modifier : stack.getAttributeModifiers(EntityEquipmentSlot.MAINHAND).entries()) {
+                if(modifier.getKey().contains("attackDamage") || modifier.getKey().contains("attackSpeed") || modifier.getKey().contains("reachDistance")) {
+                    modifiersToRemove.put(modifier.getKey(), modifier.getValue());
+                }
             }
+            if(Loader.isModLoaded("qualitytools")) QualityToolsHandler.clearOldModifiersQualityTools(entity, stack, modifiersToRemove);
+            if(!modifiersToRemove.isEmpty()) entity.getAttributeMap().removeAttributeModifiers(modifiersToRemove);
         }
-        return (int) (20.0F / (4.0F + speed));
+    }
+
+    public static void addNewModifiers(EntityLivingBase entity, ItemStack stack) {
+        if(!stack.isEmpty() && entity != null) {
+            for(Map.Entry<String, AttributeModifier> modifier : stack.getAttributeModifiers(EntityEquipmentSlot.MAINHAND).entries()) {
+                if(modifier.getKey().contains("attackDamage") ) {
+                    IAttributeInstance entityAttribute = entity.getAttributeMap().getAttributeInstance(SharedMonsterAttributes.ATTACK_DAMAGE);
+                    if(!entityAttribute.hasModifier(modifier.getValue())) entityAttribute.applyModifier(modifier.getValue());
+                }
+                else if(modifier.getKey().contains("attackSpeed") ) {
+                    IAttributeInstance entityAttribute = entity.getAttributeMap().getAttributeInstance(SharedMonsterAttributes.ATTACK_SPEED);
+                    if(!entityAttribute.hasModifier(modifier.getValue())) entityAttribute.applyModifier(modifier.getValue());
+                }
+                else if(modifier.getKey().contains("reachDistance") ) {
+                    IAttributeInstance entityAttribute = entity.getAttributeMap().getAttributeInstance(EntityPlayer.REACH_DISTANCE);
+                    if(!entityAttribute.hasModifier(modifier.getValue())) entityAttribute.applyModifier(modifier.getValue());
+                }
+            }
+            if(Loader.isModLoaded("qualitytools")) QualityToolsHandler.addNewModifiersQualityTools(entity, stack);
+        }
     }
 
     public static float getOffhandDamage(EntityPlayer player) {
-        Multimap<String, AttributeModifier> modifiers = player.getHeldItemOffhand().getAttributeModifiers(EntityEquipmentSlot.MAINHAND);
-        float attack = 4.0F;
-        for( Map.Entry<String, AttributeModifier> modifier : modifiers.entries()) {
-            if( modifier.getKey().contains("attackDamage") ) {
-                attack = (float) modifier.getValue().getAmount();
-            }
-        }
-        return (1.0F + attack) * (ConfigurationHandler.weakerOffhand ? ConfigurationHandler.offHandEfficiency : 1.0F);
+        float attack = (float)player.getEntityAttribute(SharedMonsterAttributes.ATTACK_DAMAGE).getAttributeValue();
+        return attack * (ConfigurationHandler.weakerOffhand ? ConfigurationHandler.offHandEfficiency : 1.0F);
+    }
+
+    public static int getOffhandCooldown(EntityPlayer player) {
+        float speed = (float)player.getEntityAttribute(SharedMonsterAttributes.ATTACK_SPEED).getAttributeValue();
+        return (int) (((1.0F/speed)*20.0F)+0.5F);
     }
 
     public static int getOffhandFireAspect(EntityPlayer player) {
@@ -122,9 +149,24 @@ public final class Helpers
 
         if( targetEntity.canBeAttackedWithItem() ) {
             if( !targetEntity.hitByEntity(player) ) {
-                float damage = offhand ? getOffhandDamage(player) : (float) player.getEntityAttribute(SharedMonsterAttributes.ATTACK_DAMAGE).getAttributeValue();
+                float damage;
+                int cooldown = 0;
+
+                if(offhand) {
+                    clearOldModifiers(player, player.getHeldItemMainhand());
+                    addNewModifiers(player, player.getHeldItemOffhand());
+
+                    damage = getOffhandDamage(player);
+                    cooldown = getOffhandCooldown(player);
+
+                    clearOldModifiers(player, player.getHeldItemOffhand());
+                    addNewModifiers(player, player.getHeldItemMainhand());
+                }
+                else {
+                    damage = (float) player.getEntityAttribute(SharedMonsterAttributes.ATTACK_DAMAGE).getAttributeValue();
+                }
+
                 float cMod;
-                float oMod;
                 if( targetEntity instanceof EntityLivingBase ) {
                     cMod = EnchantmentHelper.getModifierForCreature(offhand ? player.getHeldItemOffhand() : player.getHeldItemMainhand(), ((EntityLivingBase) targetEntity).getCreatureAttribute());
                 }
@@ -132,26 +174,30 @@ public final class Helpers
                     cMod = EnchantmentHelper.getModifierForCreature(offhand ? player.getHeldItemOffhand() : player.getHeldItemMainhand(), EnumCreatureAttribute.UNDEFINED);
                 }
 
-                BetterCombatMod.LOG.log(Level.INFO, "Damage values, damage: " + damage + " cMod: " + cMod);
-
-                //Post event to get any other modifies required for compat
-                //oMod = getModifierForCreature(offhand ? player.getHeldItemOffhand().getItem() : player.getHeldItemMainhand().getItem(), targetEntity);
-                oMod = 0;
-
-                int cooldown = 0;
                 float cooledStr;
-                if( offhand ) {
-                    cooldown = getOffhandCooldown(player);
-                    cooledStr = 1.0F - Helpers.execNullable(player.getCapability(EventHandlers.TUTO_CAP, null), CapabilityOffhandCooldown::getOffhandCooldown, 0) / (float) cooldown;
-                } else {
+                if(offhand) {
+                    if(cooldown > 0) cooledStr = 1.0F - Helpers.execNullable(player.getCapability(EventHandlers.TUTO_CAP, null), CapabilityOffhandCooldown::getOffhandCooldown, 0) / (float) cooldown;
+                    else cooledStr = 1.0F;
+                }
+                else {
                     cooledStr = player.getCooledAttackStrength(0.5F);
                 }
 
-                damage += oMod;
+                //Post event to get any other modifiers before multiply by cooldown required for compat
+                RLCombatModifyDamageEvent modifyResultPre = new RLCombatModifyDamageEvent.Pre(player, targetEntity, offhand, offhand ? player.getHeldItemOffhand() : player.getHeldItemMainhand(), damage);
+                MinecraftForge.EVENT_BUS.post(modifyResultPre);
+                damage += modifyResultPre.getDamageModifier();
+
                 damage *= (0.2F + cooledStr * cooledStr * 0.8F);
                 cMod *= cooledStr;
+
                 if( offhand ) {
-                    EventHandlers.INSTANCE.offhandCooldown = cooldown;
+                    CapabilityOffhandCooldown coh = player.getCapability(EventHandlers.TUTO_CAP, null);
+                    if(coh != null) {
+                        coh.setOffhandCooldown(cooldown);
+                        coh.setOffhandBeginningCooldown(cooldown);
+                        if(!player.world.isRemote) coh.sync();//Sync once here, instead of every tick that there is a cooldown in livingupdate, hopefully works fine?
+                    }
                 } else {
                     player.resetCooldown();
                 }
@@ -182,13 +228,21 @@ public final class Helpers
                                          && !player.isSprinting();
                     }
 
-                    net.minecraftforge.event.entity.player.CriticalHitEvent hitResult = net.minecraftforge.common.ForgeHooks.getCriticalHit(player, targetEntity, isCrit, isCrit ? 1.5F : 1.0F);
+                    RLCombatCriticalHitEvent hitResult = new RLCombatCriticalHitEvent(player, targetEntity, isCrit ? 1.5F : 1.0F, isCrit, offhand);
+                    MinecraftForge.EVENT_BUS.post(hitResult);
+                    if(!(hitResult.getResult() == Event.Result.ALLOW || (isCrit && hitResult.getResult() == Event.Result.DEFAULT))) hitResult = null;
+
                     isCrit = hitResult != null;
                     if( isCrit ) {
                         damage *= hitResult.getDamageModifier();
                     }
 
                     damage += cMod;
+
+                    //Post event to get any other modifiers after multiply by cooldown and crit required for compat
+                    RLCombatModifyDamageEvent modifyResultPost = new RLCombatModifyDamageEvent.Post(player, targetEntity, offhand, offhand ? player.getHeldItemOffhand() : player.getHeldItemMainhand(), damage);
+                    MinecraftForge.EVENT_BUS.post(modifyResultPost);
+                    damage += modifyResultPost.getDamageModifier();
 
                     double tgtDistDelta = player.distanceWalkedModified - player.prevDistanceWalkedModified;
                     if( isStrong && !isCrit && !knockback && player.onGround && tgtDistDelta < player.getAIMoveSpeed() ) {

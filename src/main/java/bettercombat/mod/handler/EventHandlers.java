@@ -3,12 +3,10 @@ package bettercombat.mod.handler;
 import bettercombat.mod.capability.CapabilityOffhandCooldown;
 import bettercombat.mod.combat.IOffHandAttack;
 import bettercombat.mod.combat.ISecondHurtTimer;
-import bettercombat.mod.network.PacketHandler;
-import bettercombat.mod.network.PacketSendEnergy;
+import bettercombat.mod.util.BetterCombatMod;
 import bettercombat.mod.util.ConfigurationHandler;
 import bettercombat.mod.util.Helpers;
 import bettercombat.mod.util.Reference;
-import bettercombat.mod.util.Reflections;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.nbt.NBTBase;
@@ -27,10 +25,6 @@ public class EventHandlers
 {
     public static final EventHandlers INSTANCE = new EventHandlers();
 
-    public int energyToGive;
-    public boolean giveEnergy;
-    public int offhandCooldown;
-
     @CapabilityInject(IOffHandAttack.class)
     public static final Capability<IOffHandAttack> OFFHAND_CAP = Helpers.getNull();
     @CapabilityInject(ISecondHurtTimer.class)
@@ -42,13 +36,10 @@ public class EventHandlers
 
     @SubscribeEvent
     public void onAttack(AttackEntityEvent event) {
-        if( event.getTarget() == null ) {
-            return;
-        }
-        giveEnergy = false;
-        if( event.getTarget().hurtResistantTime <= 10 ) {
-            if( ConfigurationHandler.moreSweep ) {
-                ((EntityPlayer) event.getEntityLiving()).spawnSweepParticles();
+        if(event.getTarget() == null) return;
+        if(event.getTarget().hurtResistantTime <= 10 ) {
+            if(ConfigurationHandler.moreSweep) {
+                BetterCombatMod.proxy.spawnSweep((EntityPlayer) event.getEntityLiving());
             }
         }
     }
@@ -66,27 +57,11 @@ public class EventHandlers
             CapabilityOffhandCooldown cof = player.getCapability(TUTO_CAP, null);
             Helpers.execNullable(oha, IOffHandAttack::tick);
 
-            if( cof != null ) {
-                cof.tick();
-                if( this.offhandCooldown > 0 ) {
-                    cof.setOffhandCooldown(this.offhandCooldown);
-                    if( !player.world.isRemote ) {
-                        cof.sync();
-                    }
-                    this.offhandCooldown = 0;
+            if(cof != null) {
+                if(cof.getOffhandCooldown() > 0 || cof.getOffhandBeginningCooldown() > 0) {
+                    cof.tick();
+                    //if(!player.world.isRemote) cof.sync();//Sync in Helpers when its initially set, not here, hopefully works with less packet spam?
                 }
-            }
-        }
-
-        if( event.getEntityLiving() instanceof EntityPlayer && this.giveEnergy ) {
-            EntityPlayer player = (EntityPlayer) event.getEntityLiving();
-            if( player == null ) {
-                return;
-            }
-
-            if( player.ticksSinceLastSwing == 0 ) {
-                player.ticksSinceLastSwing = this.energyToGive;
-                PacketHandler.instance.sendToServer(new PacketSendEnergy(this.energyToGive));
             }
         }
     }

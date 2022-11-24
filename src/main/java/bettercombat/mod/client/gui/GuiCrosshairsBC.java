@@ -1,17 +1,13 @@
 package bettercombat.mod.client.gui;
 
 import bettercombat.mod.capability.CapabilityOffhandCooldown;
-import bettercombat.mod.combat.IOffHandAttack;
 import bettercombat.mod.handler.EventHandlers;
-import bettercombat.mod.util.BetterCombatMod;
-import bettercombat.mod.util.Helpers;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.settings.GameSettings;
-import net.minecraft.client.util.ITooltipFlag;
 import net.minecraft.entity.Entity;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.item.ItemHoe;
@@ -71,9 +67,13 @@ public class GuiCrosshairsBC
                     float cooledStr = mc.player.getCooledAttackStrength(0.0F);
                     ItemStack heldItemOH = mc.player.getHeldItemOffhand();
                     if( heldItemOH.getItem() instanceof ItemHoe || heldItemOH.getItem() instanceof ItemTool || heldItemOH.getItem() instanceof ItemSword ) {
-                        int cooldown = Helpers.getOffhandCooldown(mc.player);
+                        CapabilityOffhandCooldown capability = mc.player.getCapability(EventHandlers.TUTO_CAP, null);
+                        float ohCooldown = 0;
+                        if(capability != null) {
+                            int ohCooldownBeginning = capability.getOffhandBeginningCooldown();
+                            if(ohCooldownBeginning > 0) ohCooldown = capability.getOffhandCooldown()/(float)ohCooldownBeginning;
+                        }
 
-                        float ohCooldown = Helpers.execNullable(mc.player.getCapability(EventHandlers.TUTO_CAP, null), CapabilityOffhandCooldown::getOffhandCooldown, 0) / (float) cooldown;
                         ohCooldown = Math.abs(1.0F - ohCooldown);
                         if( cooledStr < 1.0F ) {
                             int i = sh / 2 - 7 + 16;

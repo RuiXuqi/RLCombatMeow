@@ -13,9 +13,11 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 public class PacketOffhandCooldown implements IMessage
 {
     public int cooldown;
+    public int cooldownBeginning;
 
-    public PacketOffhandCooldown(int cooldown) {
+    public PacketOffhandCooldown(int cooldown, int cooldownBeginning) {
         this.cooldown = cooldown;
+        this.cooldownBeginning = cooldownBeginning;
     }
 
     @SuppressWarnings("unused")
@@ -24,11 +26,13 @@ public class PacketOffhandCooldown implements IMessage
     @Override
     public void fromBytes(ByteBuf buf) {
         this.cooldown = buf.readInt();
+        this.cooldownBeginning = buf.readInt();
     }
 
     @Override
     public void toBytes(ByteBuf buf) {
         buf.writeInt(this.cooldown);
+        buf.writeInt(this.cooldownBeginning);
     }
 
     public static class ServerHandler

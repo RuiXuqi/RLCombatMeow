@@ -61,7 +61,9 @@ repositories {
 dependencies {
     minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
 
-    implementation fg.deobf("curse.maven:reachfix-${reachfix_version}")
+    //implementation fg.deobf("curse.maven:reachfix-${reachfix_version}")//Not released yet
+    implementation files("libs/ReachFix-1.12.2-1.0.7-rc1.jar")
+    implementation fg.deobf("curse.maven:qualitytools-${qualitytools_version}")
 }
 
 processResources {

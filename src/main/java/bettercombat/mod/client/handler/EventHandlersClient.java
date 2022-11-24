@@ -8,9 +8,11 @@ import bettercombat.mod.handler.EventHandlers;
 import bettercombat.mod.network.PacketHandler;
 import bettercombat.mod.network.PacketMainhandAttack;
 import bettercombat.mod.network.PacketOffhandAttack;
+import bettercombat.mod.util.BetterCombatMod;
 import bettercombat.mod.util.ConfigurationHandler;
 import bettercombat.mod.util.Helpers;
-import bettercombat.mod.util.Reflections;
+import meldexun.reachfix.hook.client.EntityRendererHook;
+import meldexun.reachfix.util.ReachFixUtil;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.settings.KeyBinding;
@@ -19,13 +21,9 @@ import net.minecraft.entity.IEntityOwnable;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemStack;
-import net.minecraft.network.play.server.SPacketAnimation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.EnumHand;
-import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.RayTraceResult;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.WorldServer;
 import net.minecraftforge.client.event.MouseEvent;
 import net.minecraftforge.client.event.RenderGameOverlayEvent;
 import net.minecraftforge.common.MinecraftForge;
@@ -33,8 +31,7 @@ import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
-
-import java.util.List;
+import org.apache.logging.log4j.Level;
 
 @SideOnly(Side.CLIENT)
 public class EventHandlersClient
@@ -63,31 +60,27 @@ public class EventHandlersClient
             return;
         }
 
-        switch( event.getType() ) {
-            case CROSSHAIRS:
-                boolean cancelled = event.isCanceled();
-                event.setCanceled(true);
-                if( !cancelled ) {
-                    this.gc.renderAttackIndicator(0.5F, new ScaledResolution(Minecraft.getMinecraft()));
-                    MinecraftForge.EVENT_BUS.post(new RenderGameOverlayEvent.Post(event, event.getType()));
-                }
-                break;
+        if(event.getType() == RenderGameOverlayEvent.ElementType.CROSSHAIRS) {
+            boolean cancelled = event.isCanceled();
+            event.setCanceled(true);
+            if (!cancelled) {
+                this.gc.renderAttackIndicator(0.5F, new ScaledResolution(Minecraft.getMinecraft()));
+                MinecraftForge.EVENT_BUS.post(new RenderGameOverlayEvent.Post(event, event.getType()));
+            }
         }
     }
 
     public static void onMouseLeftClick(MouseEvent event) {
         Minecraft mc = Minecraft.getMinecraft();
+        Entity rvEntity = mc.getRenderViewEntity();
         EntityPlayer player = mc.player;
+        if(player == null || rvEntity == null) return;
 
-        if( !player.getActiveItemStack().isEmpty() ) {
-            return;
-        }
+        if(!player.getActiveItemStack().isEmpty()) return;
 
-        if( ConfigurationHandler.refoundEnergy ) {
-            refoundEnergy(player);
-        }
+        //RayTraceResult mov = getMouseOverExtended(ConfigurationHandler.longerAttack ? 5.0F : 4.0F);
+        RayTraceResult mov = EntityRendererHook.pointedObject(rvEntity, player, EnumHand.MAIN_HAND, mc.world, mc.getRenderPartialTicks());
 
-        RayTraceResult mov = getMouseOverExtended(ConfigurationHandler.longerAttack ? 5.0F : 4.0F);
         if( mov != null && mov.entityHit != null ) {
             if( mov.entityHit != player ) {
                 event.setCanceled(true);
@@ -106,31 +99,30 @@ public class EventHandlersClient
 
     public static void onMouseRightClick() {
         Minecraft mc = Minecraft.getMinecraft();
+        Entity rvEntity = mc.getRenderViewEntity();
         EntityPlayer player = mc.player;
-        if( player != null && !player.isSpectator() ) {
-            if( !player.getActiveItemStack().isEmpty() ) {
-                return;
-            }
-            if( ConfigurationHandler.requireFullEnergy
-                && Helpers.execNullable(player.getCapability(EventHandlers.TUTO_CAP, null), CapabilityOffhandCooldown::getOffhandCooldown, 1) > 0)
-            {
-                return;
-            }
-            ItemStack stackOffHand = player.getHeldItemOffhand();
+        if(player == null || rvEntity == null) return;
 
-            if( stackOffHand.isEmpty() || !ConfigurationHandler.isItemAttackUsable(stackOffHand.getItem()) ) {
-                return;
-            }
+        if(!player.isSpectator()) {
+            if(!player.getActiveItemStack().isEmpty() ) return;
+            if(ConfigurationHandler.requireFullEnergy && Helpers.execNullable(player.getCapability(EventHandlers.TUTO_CAP, null), CapabilityOffhandCooldown::getOffhandCooldown, 1) > 0) return;
+
+            ItemStack stackOffHand = player.getHeldItemOffhand();
+            if(stackOffHand.isEmpty() || !ConfigurationHandler.isItemAttackUsable(stackOffHand.getItem())) return;
 
             IOffHandAttack oha = player.getCapability(EventHandlers.OFFHAND_CAP, null);
-            RayTraceResult mov = getMouseOverExtended(ConfigurationHandler.longerAttack ? 5.0F : 4.0F);
+            //RayTraceResult mov = getMouseOverExtended(ConfigurationHandler.longerAttack ? 5.0F : 4.0F);
+
+            Helpers.clearOldModifiers(player, player.getHeldItemMainhand());
+            Helpers.addNewModifiers(player, player.getHeldItemOffhand());
+
+            RayTraceResult mov = EntityRendererHook.pointedObject(rvEntity, player, EnumHand.OFF_HAND, mc.world, mc.getRenderPartialTicks());
+
+            Helpers.clearOldModifiers(player, player.getHeldItemOffhand());
+            Helpers.addNewModifiers(player, player.getHeldItemMainhand());
 
             if( oha != null && (mov == null || mov.typeOfHit == RayTraceResult.Type.MISS || shouldAttack(mov.entityHit, player)) ) {
                 oha.swingOffHand(player);
-            }
-
-            if( !ConfigurationHandler.refoundEnergy ) {
-                EventHandlers.INSTANCE.offhandCooldown = Helpers.getOffhandCooldown(player);
             }
 
             if( mov != null && mov.entityHit != null ) {
@@ -142,11 +134,6 @@ public class EventHandlersClient
                 }
             }
         }
-    }
-
-    public static void refoundEnergy(EntityPlayer player) {
-        EventHandlers.INSTANCE.giveEnergy = true;
-        EventHandlers.INSTANCE.energyToGive = Reflections.ticksSinceLastSwing(player);
     }
 
     private static boolean shouldAttack(Entity entHit, EntityPlayer player) {
@@ -161,7 +148,7 @@ public class EventHandlersClient
         return ConfigurationHandler.isEntityAttackable(entHit) && !(entHit instanceof IEntityOwnable && ((IEntityOwnable) entHit).getOwner() == player);
     }
 
-
+/*
     public static RayTraceResult getMouseOverExtended(double dist) {
         Minecraft mc = Minecraft.getMinecraft();
         Entity rvEntity = mc.getRenderViewEntity();
@@ -183,7 +170,7 @@ public class EventHandlersClient
             Entity pointed = null;
 
             for( Entity entity : list ) {
-                if( entity.canBeCollidedWith() ) {
+                if(entity.canBeCollidedWith() && entity != rvEntity.getRidingEntity()) {//Add mount check from Charles445's RLTweaker https://github.com/Charles445/RLTweaker/blob/master/src/main/java/com/charles445/rltweaker/hook/HookBetterCombat.java
                     float borderSize = entity.getCollisionBorderSize();
                     AxisAlignedBB aabb;
 
@@ -220,4 +207,5 @@ public class EventHandlersClient
 
         return null;
     }
+ */
 }

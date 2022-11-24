@@ -3,6 +3,7 @@ package bettercombat.mod.capability;
 import bettercombat.mod.handler.EventHandlers;
 import bettercombat.mod.network.PacketHandler;
 import bettercombat.mod.network.PacketOffhandCooldown;
+import bettercombat.mod.util.BetterCombatMod;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.nbt.NBTBase;
@@ -12,6 +13,7 @@ import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.CapabilityManager;
 import net.minecraftforge.common.capabilities.ICapabilityProvider;
 import net.minecraftforge.common.util.INBTSerializable;
+import org.apache.logging.log4j.Level;
 
 import javax.annotation.Nonnull;
 import java.util.concurrent.Callable;
@@ -19,7 +21,8 @@ import java.util.concurrent.Callable;
 public class CapabilityOffhandCooldown
         implements ICapabilityProvider, INBTSerializable<NBTTagCompound>
 {
-    public int offhandCooldown;
+    private int offhandCooldown;
+    private int offhandBeginningCooldown;
     private EntityPlayer player;
 
     @Override
@@ -37,26 +40,38 @@ public class CapabilityOffhandCooldown
     public NBTTagCompound serializeNBT() {
         NBTTagCompound compound = new NBTTagCompound();
         compound.setInteger("offhandCooldown", this.offhandCooldown);
+        compound.setInteger("offhandBeginningCooldown", this.offhandBeginningCooldown);
         return compound;
     }
 
     @Override
     public void deserializeNBT(NBTTagCompound compound) {
         this.offhandCooldown = compound.getInteger("offhandCooldown");
+        this.offhandBeginningCooldown = compound.getInteger("offhandBeginningCooldown");
     }
 
     public void tick() {
-        if( this.offhandCooldown > 0 ) {
-            this.offhandCooldown -= 1;
+        if(this.offhandCooldown > 0) this.offhandCooldown -= 1;
+        if(this.offhandCooldown <= 0) {
+            this.offhandCooldown = 0;
+            this.offhandBeginningCooldown = 0;
         }
     }
 
-    public void setOffhandCooldown(int money) {
-        this.offhandCooldown = money;
+    public void setOffhandCooldown(int in) {
+        this.offhandCooldown = in;
     }
 
     public int getOffhandCooldown() {
         return this.offhandCooldown;
+    }
+
+    public void setOffhandBeginningCooldown(int in) {
+        this.offhandBeginningCooldown = in;
+    }
+
+    public int getOffhandBeginningCooldown() {
+        return this.offhandBeginningCooldown;
     }
 
     public static class Storage
@@ -86,12 +101,13 @@ public class CapabilityOffhandCooldown
 
     public CapabilityOffhandCooldown(@Nonnull EntityPlayer player) {
         this.offhandCooldown = 0;
+        this.offhandBeginningCooldown = 0;
         this.player = player;
     }
 
     public void sync() {
-        PacketOffhandCooldown packet = new PacketOffhandCooldown(this.offhandCooldown);
-        if( !this.player.world.isRemote ) {
+        PacketOffhandCooldown packet = new PacketOffhandCooldown(this.offhandCooldown, this.offhandBeginningCooldown);
+        if(!this.player.world.isRemote) {
             EntityPlayerMP playerMP = (EntityPlayerMP) this.player;
             PacketHandler.instance.sendTo(packet, playerMP);
         } else {

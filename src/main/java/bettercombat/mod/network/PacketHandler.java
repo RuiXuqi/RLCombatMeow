@@ -15,14 +15,13 @@ public class PacketHandler
     }
 
     public static void registerMessages() {
-        instance.registerMessage(PacketSendEnergy.Handler.class, PacketSendEnergy.class, 1, Side.SERVER);
-        instance.registerMessage(PacketOffhandAttack.Handler.class, PacketOffhandAttack.class, 2, Side.SERVER);
-        instance.registerMessage(PacketMainhandAttack.Handler.class, PacketMainhandAttack.class, 3, Side.SERVER);
-        instance.registerMessage(PacketOffhandCooldown.ServerHandler.class, PacketOffhandCooldown.class, 4, Side.SERVER);
+        instance.registerMessage(PacketOffhandAttack.Handler.class, PacketOffhandAttack.class, 1, Side.SERVER);
+        instance.registerMessage(PacketMainhandAttack.Handler.class, PacketMainhandAttack.class, 2, Side.SERVER);
+        instance.registerMessage(PacketOffhandCooldown.ServerHandler.class, PacketOffhandCooldown.class, 3, Side.SERVER);
     }
 
     @SideOnly(Side.CLIENT)
     public static void registerClientMessages() {
-        instance.registerMessage(PacketOffhandCooldown.ClientHandler.class, PacketOffhandCooldown.class, 4, Side.CLIENT);
+        instance.registerMessage(PacketOffhandCooldown.ClientHandler.class, PacketOffhandCooldown.class, 3, Side.CLIENT);
     }
 }
