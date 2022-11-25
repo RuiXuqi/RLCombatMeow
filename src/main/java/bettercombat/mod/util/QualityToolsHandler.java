@@ -11,7 +11,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 
-public class QualityToolsHandler {
+public abstract class QualityToolsHandler {
 
     public static void addNewModifiersQualityTools(EntityLivingBase entity, ItemStack stack) {
         NBTTagCompound tag = com.tmtravlr.qualitytools.QualityToolsHelper.getQualityTag(stack);

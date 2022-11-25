@@ -17,7 +17,7 @@ import org.apache.logging.log4j.Logger;
         version=Reference.VERSION,
         guiFactory="bettercombat.mod.client.gui.GUIFactory",
         acceptedMinecraftVersions="[1.12.2]",
-        dependencies = "required-after:reachfix;after:qualitytools")
+        dependencies = "required-after:reachfix;after:qualitytools;after:iceandfire")
 public class BetterCombatMod
 {
     @SidedProxy(modId = Reference.MOD_ID, clientSide = Reference.CLIENT_PROXY_CLASS, serverSide = Reference.SERVER_PROXY_CLASS)
