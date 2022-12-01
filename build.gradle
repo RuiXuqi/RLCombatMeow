@@ -66,6 +66,7 @@ dependencies {
     implementation fg.deobf("curse.maven:qualitytools-${qualitytools_version}")
     implementation fg.deobf("curse.maven:llibrary-${llibrary_version}")
     implementation fg.deobf("curse.maven:icenfire-${icenfire_version}")
+    implementation fg.deobf("curse.maven:potioncore-${potioncore_version}")
 }
 
 processResources {

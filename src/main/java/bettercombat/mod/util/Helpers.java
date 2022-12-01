@@ -13,6 +13,7 @@ import bettercombat.mod.capability.CapabilityOffhandCooldown;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import net.minecraft.enchantment.Enchantment;
+import net.minecraft.enchantment.EnchantmentDamage;
 import net.minecraft.enchantment.EnchantmentHelper;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
@@ -45,10 +46,8 @@ import net.minecraft.world.WorldServer;
 import net.minecraftforge.common.ForgeHooks;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.ForgeEventFactory;
-import net.minecraftforge.event.entity.player.CriticalHitEvent;
 import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.eventhandler.Event;
-import org.apache.logging.log4j.Level;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -295,7 +294,7 @@ public final class Helpers
                                     living.knockBack(player, 0.4F, MathHelper.sin(player.rotationYaw * 0.017453292F), -MathHelper.cos(player.rotationYaw * 0.017453292F));
                                     float finalDamage = damage;
                                     if( offhand ) {
-                                        execNullable(targetEntity.getCapability(EventHandlers.SECONDHURTTIMER_CAP, null),
+                                        execNullable(living.getCapability(EventHandlers.SECONDHURTTIMER_CAP, null),
                                                      sht -> sht.attackEntityFromOffhand(living, DamageSource.causePlayerDamage(player), 1.0F + EnchantmentHelper.getSweepingDamageRatio(player) * finalDamage));
                                     } else {
                                         living.attackEntityFrom(DamageSource.causePlayerDamage(player), 1.0F + EnchantmentHelper.getSweepingDamageRatio(player) * finalDamage);
@@ -371,7 +370,21 @@ public final class Helpers
                             EnchantmentHelper.applyThornEnchantments((EntityLivingBase) targetEntity, player);
                         }
 
-                        EnchantmentHelper.applyArthropodEnchantments(player, targetEntity);
+                        if(offhand && !heldItem.isEmpty()) {
+                            NBTTagList nbttaglist = heldItem.getEnchantmentTagList();
+
+                            for(int i = 0; i < nbttaglist.tagCount(); ++i) {
+                                int j = nbttaglist.getCompoundTagAt(i).getShort("id");
+                                int k = nbttaglist.getCompoundTagAt(i).getShort("lvl");
+
+                                if(Enchantment.getEnchantmentByID(j) instanceof EnchantmentDamage) {
+                                    EnchantmentDamage ench = (EnchantmentDamage)Enchantment.getEnchantmentByID(j);
+                                    if(ench.damageType == 2) ench.onEntityDamaged(player, targetEntity, k);
+                                }
+                            }
+                        }
+                        else EnchantmentHelper.applyArthropodEnchantments(player, targetEntity);
+
                         Entity entity = targetEntity;
 
                         if( targetEntity instanceof MultiPartEntityPart ) {
