@@ -8,10 +8,12 @@ package bettercombat.mod.util;
 
 import bettercombat.mod.event.RLCombatCriticalHitEvent;
 import bettercombat.mod.event.RLCombatModifyDamageEvent;
+import bettercombat.mod.event.RLCombatSweepEvent;
 import bettercombat.mod.handler.EventHandlers;
 import bettercombat.mod.capability.CapabilityOffhandCooldown;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
+import meldexun.reachfix.util.ReachFixUtil;
 import net.minecraft.enchantment.Enchantment;
 import net.minecraft.enchantment.EnchantmentDamage;
 import net.minecraft.enchantment.EnchantmentHelper;
@@ -41,6 +43,7 @@ import net.minecraft.stats.StatList;
 import net.minecraft.util.DamageSource;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.EnumParticleTypes;
+import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.WorldServer;
 import net.minecraftforge.common.ForgeHooks;
@@ -151,6 +154,7 @@ public final class Helpers
             if( !targetEntity.hitByEntity(player) ) {
                 float damage;
                 int cooldown = 0;
+                double reach;
 
                 if(offhand) {
                     clearOldModifiers(player, player.getHeldItemMainhand());
@@ -158,12 +162,14 @@ public final class Helpers
 
                     damage = getOffhandDamage(player);
                     cooldown = getOffhandCooldown(player);
+                    reach = ReachFixUtil.getEntityReach(player, EnumHand.OFF_HAND);
 
                     clearOldModifiers(player, player.getHeldItemOffhand());
                     addNewModifiers(player, player.getHeldItemMainhand());
                 }
                 else {
                     damage = (float) player.getEntityAttribute(SharedMonsterAttributes.ATTACK_DAMAGE).getAttributeValue();
+                    reach = ReachFixUtil.getEntityReach(player, EnumHand.MAIN_HAND);
                 }
 
                 float cMod;
@@ -206,7 +212,6 @@ public final class Helpers
                     boolean isStrong = cooledStr > 0.9F;
                     boolean knockback = false;
                     boolean isCrit;
-                    boolean isSword = false;
                     int knockbackMod = offhand ? getOffhandKnockback(player) : EnchantmentHelper.getKnockbackModifier(player);
                     int fireAspect = offhand ? getOffhandFireAspect(player) : EnchantmentHelper.getFireAspectModifier(player);
 
@@ -240,15 +245,19 @@ public final class Helpers
                     damage += cMod;
 
                     //Post event to get any other modifiers after multiply by cooldown and crit required for compat
-                    RLCombatModifyDamageEvent modifyResultPost = new RLCombatModifyDamageEvent.Post(player, targetEntity, offhand, offhand ? player.getHeldItemOffhand() : player.getHeldItemMainhand(), damage);
+                    RLCombatModifyDamageEvent.Post modifyResultPost = new RLCombatModifyDamageEvent.Post(player, targetEntity, offhand, offhand ? player.getHeldItemOffhand() : player.getHeldItemMainhand(), damage, DamageSource.causePlayerDamage(player));
                     MinecraftForge.EVENT_BUS.post(modifyResultPost);
                     damage += modifyResultPost.getDamageModifier();
+                    DamageSource dmgSource = modifyResultPost.getDamageSource();//Allow for changing the damage source to custom for compat with mods like SpartanWeaponry
 
+                    boolean doSweepingIgnoreSword = false;
+                    boolean doSweeping = false;
                     double tgtDistDelta = player.distanceWalkedModified - player.prevDistanceWalkedModified;
                     if( isStrong && !isCrit && !knockback && player.onGround && tgtDistDelta < player.getAIMoveSpeed() ) {
                         ItemStack ohItem = player.getHeldItem(offhand ? EnumHand.OFF_HAND : EnumHand.MAIN_HAND);
+                        doSweepingIgnoreSword = true;
                         if( ohItem.getItem() instanceof ItemSword ) {
-                            isSword = true;
+                            doSweeping = true;
                         }
                     }
 
@@ -270,9 +279,9 @@ public final class Helpers
                     if( offhand ) {
                         final float attackDmgFinal = damage;
                         attacked = execNullable(targetEntity.getCapability(EventHandlers.SECONDHURTTIMER_CAP, null),
-                                                sht -> sht.attackEntityFromOffhand(targetEntity, DamageSource.causePlayerDamage(player), attackDmgFinal), false);
+                                                sht -> sht.attackEntityFromOffhand(targetEntity, dmgSource, attackDmgFinal), false);
                     } else {
-                        attacked = targetEntity.attackEntityFrom(DamageSource.causePlayerDamage(player), damage);
+                        attacked = targetEntity.attackEntityFrom(dmgSource, damage);
                     }
                     if( attacked ) {
                         if( knockbackMod > 0 ) {
@@ -288,16 +297,23 @@ public final class Helpers
                             }
                         }
 
-                        if( isSword ) {
-                            for( EntityLivingBase living : player.world.getEntitiesWithinAABB(EntityLivingBase.class, targetEntity.getEntityBoundingBox().grow(1.0D, 0.25D, 1.0D)) ) {
-                                if( living != player && living != targetEntity && !player.isOnSameTeam(living) && player.getDistanceSq(living) < 9.0D ) {
+                        RLCombatSweepEvent sweepResult = new RLCombatSweepEvent(player, targetEntity, damage, offhand, player.getHeldItem(offhand ? EnumHand.OFF_HAND : EnumHand.MAIN_HAND), doSweepingIgnoreSword, doSweeping, EnchantmentHelper.getSweepingDamageRatio(player), targetEntity.getEntityBoundingBox().grow(1.0D, 0.25D, 1.0D), DamageSource.causePlayerDamage(player));
+                        MinecraftForge.EVENT_BUS.post(sweepResult);
+                        doSweeping = sweepResult.getDoSweep();
+
+                        if( doSweeping ) {
+                            float sweepingDamage = 1.0F + (sweepResult.getSweepModifier() * damage);
+                            AxisAlignedBB sweepingAABB = sweepResult.getSweepingAABB();
+                            DamageSource sweepingDamageSource = sweepResult.getSweepingDamageSource();
+
+                            for( EntityLivingBase living : player.world.getEntitiesWithinAABB(EntityLivingBase.class, sweepingAABB) ) {
+                                if( living != player && living != targetEntity && !player.isOnSameTeam(living) && player.getDistanceSq(living) < (reach * reach) ) {
                                     living.knockBack(player, 0.4F, MathHelper.sin(player.rotationYaw * 0.017453292F), -MathHelper.cos(player.rotationYaw * 0.017453292F));
-                                    float finalDamage = damage;
                                     if( offhand ) {
                                         execNullable(living.getCapability(EventHandlers.SECONDHURTTIMER_CAP, null),
-                                                     sht -> sht.attackEntityFromOffhand(living, DamageSource.causePlayerDamage(player), 1.0F + EnchantmentHelper.getSweepingDamageRatio(player) * finalDamage));
+                                                     sht -> sht.attackEntityFromOffhand(living, sweepingDamageSource, sweepingDamage));
                                     } else {
-                                        living.attackEntityFrom(DamageSource.causePlayerDamage(player), 1.0F + EnchantmentHelper.getSweepingDamageRatio(player) * finalDamage);
+                                        living.attackEntityFrom(sweepingDamageSource, sweepingDamage);
                                     }
                                 }
                             }
@@ -336,7 +352,7 @@ public final class Helpers
                             }
                         }
 
-                        if( !isCrit && !isSword ) {
+                        if( !isCrit && !doSweeping ) {
                             if( isStrong ) {
                                 player.world.playSound(null, player.posX, player.posY, player.posZ, SoundEvents.ENTITY_PLAYER_ATTACK_STRONG, player.getSoundCategory(), 1.0F, 1.0F);
                             } else {
@@ -424,6 +440,10 @@ public final class Helpers
                         if( burnInflicted ) {
                             targetEntity.extinguish();
                         }
+                    }
+
+                    if(Loader.isModLoaded("spartanweaponry")){
+                        SpartanWeaponryHandler.handleSpartanQuickStrike(player.getHeldItem(offhand ? EnumHand.OFF_HAND : EnumHand.MAIN_HAND), targetEntity);
                     }
                 }
             }

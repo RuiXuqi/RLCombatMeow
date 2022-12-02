@@ -3,6 +3,7 @@ package bettercombat.mod.event;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.DamageSource;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 
 public class RLCombatModifyDamageEvent extends PlayerEvent {
@@ -37,9 +38,21 @@ public class RLCombatModifyDamageEvent extends PlayerEvent {
     public static class Post extends RLCombatModifyDamageEvent {
         /**
          * Modify attack damage after cooldown multiplier and critical multiplier is added to it
+         * Allow changing the damage source as attacking will happen at this point
          */
-        public Post(EntityPlayer player, Entity targetEntity, boolean offhand, ItemStack stack, float damage) {
+
+        private DamageSource dmgSource;
+        public Post(EntityPlayer player, Entity targetEntity, boolean offhand, ItemStack stack, float damage, DamageSource dmgSource) {
             super(player, targetEntity, offhand, stack, damage);
+            this.dmgSource = dmgSource;
+        }
+
+        public void setDamageSource(DamageSource dmgSource) {
+            this.dmgSource = dmgSource;
+        }
+
+        public DamageSource getDamageSource() {
+            return this.dmgSource;
         }
     }
 
