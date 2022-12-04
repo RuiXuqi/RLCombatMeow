@@ -30,6 +30,11 @@ public class ConfigurationHandler
     public static float offHandEfficiency = 0.5F;
     public static float critChance = 0.2F;
 
+    public static boolean enableFuzzyTargetting = true;
+    public static float fuzzyRadius = 0.2F;
+    public static boolean enableSweepingTargetting = true;
+    public static float sweepingRatio = 0.1F;
+
     private static String[] itemClassWhitelist = new String[] {
             "net.minecraft.item.ItemSword",
             "net.minecraft.item.ItemAxe",
@@ -82,6 +87,11 @@ public class ConfigurationHandler
         offHandEfficiency = config.getFloat("Offhand Efficiency", "general", 0.5F, 0.0F, 1.0F, "The efficiency of an attack with offhanded weapon in percent (attack damage * efficiency)");
         critChance = config.getFloat("Random Crit Chance", "general", 0.2F, 0.0F, 1.0F, "How likely it is to land a critical hit in percent");
         entityBlacklist = config.getStringList("Entity Blacklist", "general", EB_DEF, "Blacklisted entity classes for attacking. You will not be able to attack any entity that extends this class! Please note that entities extending IEntityOwnable are by default blacklisted, when the entity is owned by the attacker.");
+
+        enableFuzzyTargetting = config.getBoolean("Enable Fuzzy Targetting", "general", true, "Enables fuzzy checks at the end of attack raytrace");
+        fuzzyRadius = config.getFloat("Fuzzy Radius", "general", 0.2F, 0, 1, "Radius of fuzzy targetting");
+        enableSweepingTargetting = config.getBoolean("Enable Sweeping Targetting", "general", true, "Enables a ratio-based sweeping raytrace from left-to-right or vice versa based on attacking hand");
+        sweepingRatio = config.getFloat("Sweep Ratio", "general", 0.1F, 0, 1, "Ratio of sweeping offset to distance");
 
         if( loadedVer < VERSION ) {
             config.getCategory("general").remove("Item Class Blacklist");

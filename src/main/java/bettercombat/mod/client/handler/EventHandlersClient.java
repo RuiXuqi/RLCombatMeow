@@ -11,6 +11,7 @@ import bettercombat.mod.network.PacketOffhandAttack;
 import bettercombat.mod.util.ConfigurationHandler;
 import bettercombat.mod.util.Helpers;
 import bettercombat.mod.util.InFHandler;
+import bettercombat.mod.util.ReachFixFuzzyUtil;
 import meldexun.reachfix.hook.client.EntityRendererHook;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.ScaledResolution;
@@ -79,7 +80,8 @@ public class EventHandlersClient
 
         if(!player.getActiveItemStack().isEmpty()) return;
 
-        RayTraceResult mov = EntityRendererHook.pointedObject(rvEntity, player, EnumHand.MAIN_HAND, mc.world, mc.getRenderPartialTicks());
+        //RayTraceResult mov = EntityRendererHook.pointedObject(rvEntity, player, EnumHand.MAIN_HAND, mc.world, mc.getRenderPartialTicks());
+        RayTraceResult mov = ReachFixFuzzyUtil.pointedObject(rvEntity, player, EnumHand.MAIN_HAND, mc.world, mc.getRenderPartialTicks());
 
         if( mov != null && mov.entityHit != null ) {
             if( mov.entityHit != player ) {
@@ -122,7 +124,8 @@ public class EventHandlersClient
             Helpers.clearOldModifiers(player, player.getHeldItemMainhand());
             Helpers.addNewModifiers(player, player.getHeldItemOffhand());
 
-            RayTraceResult mov = EntityRendererHook.pointedObject(rvEntity, player, EnumHand.OFF_HAND, mc.world, mc.getRenderPartialTicks());
+            //RayTraceResult mov = EntityRendererHook.pointedObject(rvEntity, player, EnumHand.OFF_HAND, mc.world, mc.getRenderPartialTicks());
+            RayTraceResult mov = ReachFixFuzzyUtil.pointedObject(rvEntity, player, EnumHand.OFF_HAND, mc.world, mc.getRenderPartialTicks());
 
             Helpers.clearOldModifiers(player, player.getHeldItemOffhand());
             Helpers.addNewModifiers(player, player.getHeldItemMainhand());
