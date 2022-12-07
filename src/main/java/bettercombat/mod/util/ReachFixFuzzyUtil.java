@@ -1,5 +1,5 @@
 package bettercombat.mod.util;
-
+/*
 import meldexun.reachfix.util.ReachFixUtil;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
@@ -12,9 +12,9 @@ import org.apache.logging.log4j.Level;
 import javax.annotation.Nullable;
 import java.util.List;
 
-/**
- * Class based on ReachFix EntityRendererHook by Meldexun https://github.com/Meldexun/ReachFix/blob/1.12/src/main/java/meldexun/reachfix/hook/client/EntityRendererHook.java
- */
+
+Class based on ReachFix EntityRendererHook by Meldexun https://github.com/Meldexun/ReachFix/blob/1.12/src/main/java/meldexun/reachfix/hook/client/EntityRendererHook.java
+
 public abstract class ReachFixFuzzyUtil {
 
     public static RayTraceResult pointedObject(Entity viewEntity, EntityPlayer player, EnumHand hand, World world, float partialTicks) {
@@ -194,3 +194,5 @@ public abstract class ReachFixFuzzyUtil {
         return new Vec3d(end.x + dist*dx, end.y, end.z + dist*dz);
     }
 }
+
+ */
