@@ -8,6 +8,7 @@ import bettercombat.mod.handler.EventHandlers;
 import bettercombat.mod.network.PacketHandler;
 import bettercombat.mod.network.PacketMainhandAttack;
 import bettercombat.mod.network.PacketOffhandAttack;
+import bettercombat.mod.util.BetterCombatMod;
 import bettercombat.mod.util.ConfigurationHandler;
 import bettercombat.mod.util.Helpers;
 import bettercombat.mod.util.InFHandler;
@@ -32,7 +33,6 @@ import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
-
 
 @SideOnly(Side.CLIENT)
 public class EventHandlersClient
@@ -125,11 +125,12 @@ public class EventHandlersClient
 
             RayTraceResult mov = EntityRendererHook.pointedObject(rvEntity, player, EnumHand.OFF_HAND, mc.world, mc.getRenderPartialTicks());
             //RayTraceResult mov = ReachFixFuzzyUtil.pointedObject(rvEntity, player, EnumHand.OFF_HAND, mc.world, mc.getRenderPartialTicks());
+            int cooldown = Helpers.getOffhandCooldown(player);
 
             Helpers.clearOldModifiers(player, player.getHeldItemOffhand());
             Helpers.addNewModifiers(player, player.getHeldItemMainhand());
 
-            if( oha != null && (mov == null || mov.typeOfHit == RayTraceResult.Type.MISS || shouldAttack(mov.entityHit, player)) ) {
+            if( oha != null && (mov == null || mov.typeOfHit == RayTraceResult.Type.MISS || shouldAttack(mov.entityHit, player) || mov.typeOfHit == RayTraceResult.Type.BLOCK) ) {
                 oha.swingOffHand(player);
             }
 
@@ -146,6 +147,14 @@ public class EventHandlersClient
                     if( shouldAttack(mov.entityHit, player) ) {
                         PacketHandler.instance.sendToServer(new PacketOffhandAttack(mov.entityHit.getEntityId()));
                     }
+                }
+            }
+            else if(mov == null || mov.typeOfHit != RayTraceResult.Type.BLOCK){
+                CapabilityOffhandCooldown coh = player.getCapability(EventHandlers.TUTO_CAP, null);
+                if(coh != null) {
+                    coh.setOffhandCooldown(cooldown);
+                    coh.setOffhandBeginningCooldown(cooldown);
+                    coh.sync();
                 }
             }
         }

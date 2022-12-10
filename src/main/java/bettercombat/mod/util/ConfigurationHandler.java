@@ -30,6 +30,8 @@ public class ConfigurationHandler
     public static float offHandEfficiency = 0.5F;
     public static float critChance = 0.2F;
 
+    public static boolean requireEnergyToRandomCrit = true;
+
     //public static boolean enableFuzzyTargetting = true;
     //public static float fuzzyRadius = 0.2F;
     //public static boolean enableSweepingTargetting = true;
@@ -87,6 +89,8 @@ public class ConfigurationHandler
         offHandEfficiency = config.getFloat("Offhand Efficiency", "general", 0.5F, 0.0F, 1.0F, "The efficiency of an attack with offhanded weapon in percent (attack damage * efficiency)");
         critChance = config.getFloat("Random Crit Chance", "general", 0.2F, 0.0F, 1.0F, "How likely it is to land a critical hit in percent");
         entityBlacklist = config.getStringList("Entity Blacklist", "general", EB_DEF, "Blacklisted entity classes for attacking. You will not be able to attack any entity that extends this class! Please note that entities extending IEntityOwnable are by default blacklisted, when the entity is owned by the attacker.");
+
+        requireEnergyToRandomCrit = config.getBoolean("Require Full Energy to Random Crit", "general", true, "Whether or not full/nearly full energy should be required to randomly crit");
 
         //enableFuzzyTargetting = config.getBoolean("Enable Fuzzy Targetting", "general", true, "Enables fuzzy checks at the end of attack raytrace");
         //fuzzyRadius = config.getFloat("Fuzzy Radius", "general", 0.2F, 0, 1, "Radius of fuzzy targetting");

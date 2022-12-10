@@ -222,7 +222,7 @@ public final class Helpers
                     }
 
                     if( ConfigurationHandler.randomCrits ) {
-                        isCrit = player.getRNG().nextFloat() < ConfigurationHandler.critChance && !player.isSprinting();
+                        isCrit = player.getRNG().nextFloat() < ConfigurationHandler.critChance && !player.isSprinting() && (!ConfigurationHandler.requireEnergyToRandomCrit || isStrong);
                         //Allow forced jump crits at close range
                         if(!isCrit) isCrit = player.getDistance(targetEntity) < 2.0D && isStrong && player.fallDistance > 0.0F && !player.onGround && !player.isOnLadder() &&
                                 !player.isInWater() && !player.isPotionActive(MobEffects.BLINDNESS) && !player.isRiding() &&
