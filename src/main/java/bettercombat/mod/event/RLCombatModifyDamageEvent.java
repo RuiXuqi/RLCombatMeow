@@ -12,17 +12,19 @@ public class RLCombatModifyDamageEvent extends PlayerEvent {
     private final float baseDamage;
     private final boolean offhand;
     private final ItemStack stack;
+    private final float cooledStrength;
     private float damageModifier;
 
     /**
      * Modify attack damage (Pre or Post) cooldown multiplier and critical multiplier is added to it
      */
-    private RLCombatModifyDamageEvent(EntityPlayer player, Entity targetEntity, boolean offhand, ItemStack stack, float damage) {
+    private RLCombatModifyDamageEvent(EntityPlayer player, Entity targetEntity, boolean offhand, ItemStack stack, float damage, float cooledStrength) {
         super(player);
         this.targetEntity = targetEntity;
         this.offhand = offhand;
         this.baseDamage = damage;
         this.stack = stack;
+        this.cooledStrength = cooledStrength;
         this.damageModifier = 0;
     }
 
@@ -30,8 +32,8 @@ public class RLCombatModifyDamageEvent extends PlayerEvent {
         /**
          * Modify attack damage before cooldown multiplier and critical multiplier is added to it
          */
-        public Pre(EntityPlayer player, Entity targetEntity, boolean offhand, ItemStack stack, float damage) {
-            super(player, targetEntity, offhand, stack, damage);
+        public Pre(EntityPlayer player, Entity targetEntity, boolean offhand, ItemStack stack, float damage, float cooledStrength) {
+            super(player, targetEntity, offhand, stack, damage, cooledStrength);
         }
     }
 
@@ -42,8 +44,8 @@ public class RLCombatModifyDamageEvent extends PlayerEvent {
          */
 
         private DamageSource dmgSource;
-        public Post(EntityPlayer player, Entity targetEntity, boolean offhand, ItemStack stack, float damage, DamageSource dmgSource) {
-            super(player, targetEntity, offhand, stack, damage);
+        public Post(EntityPlayer player, Entity targetEntity, boolean offhand, ItemStack stack, float damage, float cooledStrength, DamageSource dmgSource) {
+            super(player, targetEntity, offhand, stack, damage, cooledStrength);
             this.dmgSource = dmgSource;
         }
 
@@ -60,6 +62,7 @@ public class RLCombatModifyDamageEvent extends PlayerEvent {
     public float getBaseDamage() { return this.baseDamage; }
     public boolean getOffhand() { return this.offhand; }
     public ItemStack getStack() { return this.stack; }
+    public float getCooledStrength() { return this.cooledStrength; }
     public float getDamageModifier() { return this.damageModifier; }
     public void setDamageModifier(float modifier) { this.damageModifier = modifier; }
 }

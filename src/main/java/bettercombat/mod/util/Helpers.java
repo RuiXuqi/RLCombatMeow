@@ -190,7 +190,7 @@ public final class Helpers
                 }
 
                 //Post event to get any other modifiers before multiply by cooldown required for compat
-                RLCombatModifyDamageEvent modifyResultPre = new RLCombatModifyDamageEvent.Pre(player, targetEntity, offhand, offhand ? player.getHeldItemOffhand() : player.getHeldItemMainhand(), damage);
+                RLCombatModifyDamageEvent modifyResultPre = new RLCombatModifyDamageEvent.Pre(player, targetEntity, offhand, offhand ? player.getHeldItemOffhand() : player.getHeldItemMainhand(), damage, cooledStr);
                 MinecraftForge.EVENT_BUS.post(modifyResultPre);
                 damage += modifyResultPre.getDamageModifier();
 
@@ -245,7 +245,7 @@ public final class Helpers
                     damage += cMod;
 
                     //Post event to get any other modifiers after multiply by cooldown and crit required for compat
-                    RLCombatModifyDamageEvent.Post modifyResultPost = new RLCombatModifyDamageEvent.Post(player, targetEntity, offhand, offhand ? player.getHeldItemOffhand() : player.getHeldItemMainhand(), damage, DamageSource.causePlayerDamage(player));
+                    RLCombatModifyDamageEvent.Post modifyResultPost = new RLCombatModifyDamageEvent.Post(player, targetEntity, offhand, offhand ? player.getHeldItemOffhand() : player.getHeldItemMainhand(), damage, cooledStr, DamageSource.causePlayerDamage(player));
                     MinecraftForge.EVENT_BUS.post(modifyResultPost);
                     damage += modifyResultPost.getDamageModifier();
                     DamageSource dmgSource = modifyResultPost.getDamageSource();//Allow for changing the damage source to custom for compat with mods like SpartanWeaponry
