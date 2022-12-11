@@ -17,6 +17,7 @@ import meldexun.reachfix.util.ReachFixUtil;
 import net.minecraft.enchantment.Enchantment;
 import net.minecraft.enchantment.EnchantmentDamage;
 import net.minecraft.enchantment.EnchantmentHelper;
+import net.minecraft.enchantment.EnchantmentSweepingEdge;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.EnumCreatureAttribute;
@@ -297,7 +298,7 @@ public final class Helpers
                             }
                         }
 
-                        RLCombatSweepEvent sweepResult = new RLCombatSweepEvent(player, targetEntity, damage, offhand, player.getHeldItem(offhand ? EnumHand.OFF_HAND : EnumHand.MAIN_HAND), doSweepingIgnoreSword, doSweeping, EnchantmentHelper.getSweepingDamageRatio(player), targetEntity.getEntityBoundingBox().grow(1.0D, 0.25D, 1.0D), DamageSource.causePlayerDamage(player));
+                        RLCombatSweepEvent sweepResult = new RLCombatSweepEvent(player, targetEntity, damage, offhand, player.getHeldItem(offhand ? EnumHand.OFF_HAND : EnumHand.MAIN_HAND), doSweepingIgnoreSword, doSweeping, EnchantmentSweepingEdge.getSweepingDamageRatio(EnchantmentHelper.getEnchantmentLevel(Enchantments.SWEEPING, player.getHeldItem(offhand ? EnumHand.OFF_HAND : EnumHand.MAIN_HAND))), targetEntity.getEntityBoundingBox().grow(1.0D, 0.25D, 1.0D), DamageSource.causePlayerDamage(player));
                         MinecraftForge.EVENT_BUS.post(sweepResult);
                         doSweeping = sweepResult.getDoSweep();
 
