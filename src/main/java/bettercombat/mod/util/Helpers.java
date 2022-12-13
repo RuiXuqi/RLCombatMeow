@@ -147,9 +147,10 @@ public final class Helpers
     }
 
     public static void attackTargetEntityItem(EntityPlayer player, Entity targetEntity, boolean offhand) {
-        if( !ForgeHooks.onPlayerAttackTarget(player, targetEntity) ) {
-            return;
-        }
+        if(!ForgeHooks.onPlayerAttackTarget(player, targetEntity)) return;
+
+        //Check for a Reskillable lock ourselves, since reskillable normally only blocks it *after* this handling is ran
+        if(Loader.isModLoaded("reskillable") && ReskillableHandler.shouldLockAttack(player, offhand ? player.getHeldItemOffhand() : player.getHeldItemMainhand())) return;
 
         if( targetEntity.canBeAttackedWithItem() ) {
             if( !targetEntity.hitByEntity(player) ) {

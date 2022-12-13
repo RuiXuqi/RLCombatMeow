@@ -68,6 +68,7 @@ dependencies {
     implementation fg.deobf("curse.maven:icenfire-${icenfire_version}")
     implementation fg.deobf("curse.maven:potioncore-${potioncore_version}")
     implementation fg.deobf("curse.maven:spartanweaponry-${spartanweaponry_version}")
+    implementation fg.deobf("curse.maven:reskillable-${reskillable_version}")
 }
 
 processResources {
