@@ -8,10 +8,7 @@ import bettercombat.mod.handler.EventHandlers;
 import bettercombat.mod.network.PacketHandler;
 import bettercombat.mod.network.PacketMainhandAttack;
 import bettercombat.mod.network.PacketOffhandAttack;
-import bettercombat.mod.util.BetterCombatMod;
-import bettercombat.mod.util.ConfigurationHandler;
-import bettercombat.mod.util.Helpers;
-import bettercombat.mod.util.InFHandler;
+import bettercombat.mod.util.*;
 import meldexun.reachfix.hook.client.EntityRendererHook;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.ScaledResolution;
@@ -78,6 +75,8 @@ public class EventHandlersClient
         if(player == null || rvEntity == null) return;
 
         if(!player.getActiveItemStack().isEmpty()) return;
+        //Defer to BetterSurvival's handling of Nunchaku since it then defers back to our handling once its spinning
+        if(Loader.isModLoaded("mujmajnkraftsbettersurvival") && BetterSurvivalHandler.isNunchaku(player.getHeldItemMainhand().getItem())) return;
 
         RayTraceResult mov = EntityRendererHook.pointedObject(rvEntity, player, EnumHand.MAIN_HAND, mc.world, mc.getRenderPartialTicks());
         //RayTraceResult mov = ReachFixFuzzyUtil.pointedObject(rvEntity, player, EnumHand.MAIN_HAND, mc.world, mc.getRenderPartialTicks());

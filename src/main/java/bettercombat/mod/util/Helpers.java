@@ -50,8 +50,10 @@ import net.minecraft.world.WorldServer;
 import net.minecraftforge.common.ForgeHooks;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.ForgeEventFactory;
+import net.minecraftforge.event.entity.player.AttackEntityEvent;
 import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.eventhandler.Event;
+import org.apache.logging.log4j.Level;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -147,10 +149,12 @@ public final class Helpers
     }
 
     public static void attackTargetEntityItem(EntityPlayer player, Entity targetEntity, boolean offhand) {
-        if(!ForgeHooks.onPlayerAttackTarget(player, targetEntity)) return;
+        ItemStack weapon = offhand ? player.getHeldItemOffhand() : player.getHeldItemMainhand();
+        if(MinecraftForge.EVENT_BUS.post(new AttackEntityEvent(player, targetEntity))) return;
+        if(!weapon.isEmpty() && weapon.getItem().onLeftClickEntity(weapon, player, targetEntity)) return;
 
         //Check for a Reskillable lock ourselves, since reskillable normally only blocks it *after* this handling is ran
-        if(Loader.isModLoaded("reskillable") && ReskillableHandler.shouldLockAttack(player, offhand ? player.getHeldItemOffhand() : player.getHeldItemMainhand())) return;
+        if(Loader.isModLoaded("reskillable") && ReskillableHandler.shouldLockAttack(player, weapon)) return;
 
         if( targetEntity.canBeAttackedWithItem() ) {
             if( !targetEntity.hitByEntity(player) ) {
@@ -176,10 +180,10 @@ public final class Helpers
 
                 float cMod;
                 if( targetEntity instanceof EntityLivingBase ) {
-                    cMod = EnchantmentHelper.getModifierForCreature(offhand ? player.getHeldItemOffhand() : player.getHeldItemMainhand(), ((EntityLivingBase) targetEntity).getCreatureAttribute());
+                    cMod = EnchantmentHelper.getModifierForCreature(weapon, ((EntityLivingBase) targetEntity).getCreatureAttribute());
                 }
                 else {
-                    cMod = EnchantmentHelper.getModifierForCreature(offhand ? player.getHeldItemOffhand() : player.getHeldItemMainhand(), EnumCreatureAttribute.UNDEFINED);
+                    cMod = EnchantmentHelper.getModifierForCreature(weapon, EnumCreatureAttribute.UNDEFINED);
                 }
 
                 float cooledStr;
@@ -192,7 +196,7 @@ public final class Helpers
                 }
 
                 //Post event to get any other modifiers before multiply by cooldown required for compat
-                RLCombatModifyDamageEvent modifyResultPre = new RLCombatModifyDamageEvent.Pre(player, targetEntity, offhand, offhand ? player.getHeldItemOffhand() : player.getHeldItemMainhand(), damage, cooledStr);
+                RLCombatModifyDamageEvent modifyResultPre = new RLCombatModifyDamageEvent.Pre(player, targetEntity, offhand, weapon, damage, cooledStr);
                 MinecraftForge.EVENT_BUS.post(modifyResultPre);
                 damage += modifyResultPre.getDamageModifier();
 
@@ -247,7 +251,7 @@ public final class Helpers
                     damage += cMod;
 
                     //Post event to get any other modifiers after multiply by cooldown and crit required for compat
-                    RLCombatModifyDamageEvent.Post modifyResultPost = new RLCombatModifyDamageEvent.Post(player, targetEntity, offhand, offhand ? player.getHeldItemOffhand() : player.getHeldItemMainhand(), damage, cooledStr, DamageSource.causePlayerDamage(player));
+                    RLCombatModifyDamageEvent.Post modifyResultPost = new RLCombatModifyDamageEvent.Post(player, targetEntity, offhand, weapon, damage, cooledStr, DamageSource.causePlayerDamage(player));
                     MinecraftForge.EVENT_BUS.post(modifyResultPost);
                     damage += modifyResultPost.getDamageModifier();
                     DamageSource dmgSource = modifyResultPost.getDamageSource();//Allow for changing the damage source to custom for compat with mods like SpartanWeaponry
@@ -256,9 +260,8 @@ public final class Helpers
                     boolean doSweeping = false;
                     double tgtDistDelta = player.distanceWalkedModified - player.prevDistanceWalkedModified;
                     if( isStrong && !isCrit && !knockback && player.onGround && tgtDistDelta < player.getAIMoveSpeed() ) {
-                        ItemStack ohItem = player.getHeldItem(offhand ? EnumHand.OFF_HAND : EnumHand.MAIN_HAND);
                         doSweepingIgnoreSword = true;
-                        if( ohItem.getItem() instanceof ItemSword ) {
+                        if( weapon.getItem() instanceof ItemSword ) {
                             doSweeping = true;
                         }
                     }
@@ -299,7 +302,7 @@ public final class Helpers
                             }
                         }
 
-                        RLCombatSweepEvent sweepResult = new RLCombatSweepEvent(player, targetEntity, damage, offhand, player.getHeldItem(offhand ? EnumHand.OFF_HAND : EnumHand.MAIN_HAND), doSweepingIgnoreSword, doSweeping, EnchantmentSweepingEdge.getSweepingDamageRatio(EnchantmentHelper.getEnchantmentLevel(Enchantments.SWEEPING, player.getHeldItem(offhand ? EnumHand.OFF_HAND : EnumHand.MAIN_HAND))), targetEntity.getEntityBoundingBox().grow(1.0D, 0.25D, 1.0D), DamageSource.causePlayerDamage(player));
+                        RLCombatSweepEvent sweepResult = new RLCombatSweepEvent(player, targetEntity, damage, offhand, weapon, doSweepingIgnoreSword, doSweeping, EnchantmentSweepingEdge.getSweepingDamageRatio(EnchantmentHelper.getEnchantmentLevel(Enchantments.SWEEPING, player.getHeldItem(offhand ? EnumHand.OFF_HAND : EnumHand.MAIN_HAND))), targetEntity.getEntityBoundingBox().grow(1.0D, 0.25D, 1.0D), DamageSource.causePlayerDamage(player));
                         MinecraftForge.EVENT_BUS.post(sweepResult);
                         doSweeping = sweepResult.getDoSweep();
 
@@ -339,9 +342,8 @@ public final class Helpers
                         }
 
                         boolean playSound = true;
-                        ItemStack heldItem = offhand ? player.getHeldItemOffhand() : player.getHeldItemMainhand();
-                        if( !heldItem.isEmpty() ) {
-                            if( heldItem.getItem() instanceof ItemSpade ) {
+                        if( !weapon.isEmpty() ) {
+                            if( weapon.getItem() instanceof ItemSpade ) {
                                 playSound = false;
                             }
                             if( playSound ) {
@@ -369,7 +371,7 @@ public final class Helpers
                         if( !player.world.isRemote && targetEntity instanceof EntityPlayer ) {
                             EntityPlayer entityplayer = (EntityPlayer) targetEntity;
                             ItemStack activeItem = entityplayer.isHandActive() ? entityplayer.getActiveItemStack() : ItemStack.EMPTY;
-                            if( heldItem.getItem() instanceof ItemAxe && activeItem.getItem() instanceof ItemShield ) {
+                            if( weapon.getItem() instanceof ItemAxe && activeItem.getItem() instanceof ItemShield ) {
                                 float efficiency = 0.25F + EnchantmentHelper.getEfficiencyModifier(player) * 0.05F;
                                 if( knockback ) {
                                     efficiency += 0.75F;
@@ -388,8 +390,8 @@ public final class Helpers
                             EnchantmentHelper.applyThornEnchantments((EntityLivingBase) targetEntity, player);
                         }
 
-                        if(offhand && !heldItem.isEmpty()) {
-                            NBTTagList nbttaglist = heldItem.getEnchantmentTagList();
+                        if(offhand && !weapon.isEmpty()) {
+                            NBTTagList nbttaglist = weapon.getEnchantmentTagList();
 
                             for(int i = 0; i < nbttaglist.tagCount(); ++i) {
                                 int j = nbttaglist.getCompoundTagAt(i).getShort("id");
@@ -412,10 +414,10 @@ public final class Helpers
                             }
                         }
 
-                        if( !heldItem.isEmpty() && entity instanceof EntityLivingBase ) {
-                            ItemStack beforeHitCopy = heldItem.copy();
-                            heldItem.hitEntity((EntityLivingBase) entity, player);
-                            if( heldItem.isEmpty() ) {
+                        if( !weapon.isEmpty() && entity instanceof EntityLivingBase ) {
+                            ItemStack beforeHitCopy = weapon.copy();
+                            weapon.hitEntity((EntityLivingBase) entity, player);
+                            if( weapon.isEmpty() ) {
                                 player.setHeldItem(offhand ? EnumHand.OFF_HAND : EnumHand.MAIN_HAND, ItemStack.EMPTY);
                                 ForgeEventFactory.onPlayerDestroyItem(player, beforeHitCopy, offhand ? EnumHand.OFF_HAND : EnumHand.MAIN_HAND);
                             }
@@ -445,7 +447,7 @@ public final class Helpers
                     }
 
                     if(Loader.isModLoaded("spartanweaponry")){
-                        SpartanWeaponryHandler.handleSpartanQuickStrike(player.getHeldItem(offhand ? EnumHand.OFF_HAND : EnumHand.MAIN_HAND), targetEntity);
+                        SpartanWeaponryHandler.handleSpartanQuickStrike(weapon, targetEntity);
                     }
                 }
             }
