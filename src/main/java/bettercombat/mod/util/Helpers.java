@@ -390,20 +390,7 @@ public final class Helpers
                             EnchantmentHelper.applyThornEnchantments((EntityLivingBase) targetEntity, player);
                         }
 
-                        if(offhand && !weapon.isEmpty()) {
-                            NBTTagList nbttaglist = weapon.getEnchantmentTagList();
-
-                            for(int i = 0; i < nbttaglist.tagCount(); ++i) {
-                                int j = nbttaglist.getCompoundTagAt(i).getShort("id");
-                                int k = nbttaglist.getCompoundTagAt(i).getShort("lvl");
-
-                                if(Enchantment.getEnchantmentByID(j) instanceof EnchantmentDamage) {
-                                    EnchantmentDamage ench = (EnchantmentDamage)Enchantment.getEnchantmentByID(j);
-                                    if(ench.damageType == 2) ench.onEntityDamaged(player, targetEntity, k);
-                                }
-                            }
-                        }
-                        else EnchantmentHelper.applyArthropodEnchantments(player, targetEntity);
+                        EnchantmentHelper.applyArthropodEnchantments(player, targetEntity);
 
                         Entity entity = targetEntity;
 
