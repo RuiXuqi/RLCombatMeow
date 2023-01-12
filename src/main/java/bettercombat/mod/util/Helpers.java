@@ -15,7 +15,6 @@ import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import meldexun.reachfix.util.ReachFixUtil;
 import net.minecraft.enchantment.Enchantment;
-import net.minecraft.enchantment.EnchantmentDamage;
 import net.minecraft.enchantment.EnchantmentHelper;
 import net.minecraft.enchantment.EnchantmentSweepingEdge;
 import net.minecraft.entity.Entity;
@@ -47,13 +46,11 @@ import net.minecraft.util.EnumParticleTypes;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.WorldServer;
-import net.minecraftforge.common.ForgeHooks;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.ForgeEventFactory;
 import net.minecraftforge.event.entity.player.AttackEntityEvent;
 import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.eventhandler.Event;
-import org.apache.logging.log4j.Level;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -148,7 +145,7 @@ public final class Helpers
         return 0;
     }
 
-    public static void attackTargetEntityItem(EntityPlayer player, Entity targetEntity, boolean offhand) {
+    public static void attackTargetEntityItem(EntityPlayer player, Entity targetEntity, boolean offhand, double motionX, double motionY, double motionZ) {
         ItemStack weapon = offhand ? player.getHeldItemOffhand() : player.getHeldItemMainhand();
         if(MinecraftForge.EVENT_BUS.post(new AttackEntityEvent(player, targetEntity))) return;
         if(!weapon.isEmpty() && weapon.getItem().onLeftClickEntity(weapon, player, targetEntity)) return;
@@ -196,7 +193,7 @@ public final class Helpers
                 }
 
                 //Post event to get any other modifiers before multiply by cooldown required for compat
-                RLCombatModifyDamageEvent modifyResultPre = new RLCombatModifyDamageEvent.Pre(player, targetEntity, offhand, weapon, damage, cooledStr);
+                RLCombatModifyDamageEvent modifyResultPre = new RLCombatModifyDamageEvent.Pre(player, targetEntity, offhand, weapon, damage, cooledStr, motionX, motionY, motionZ);
                 MinecraftForge.EVENT_BUS.post(modifyResultPre);
                 damage += modifyResultPre.getDamageModifier();
 
@@ -251,7 +248,7 @@ public final class Helpers
                     damage += cMod;
 
                     //Post event to get any other modifiers after multiply by cooldown and crit required for compat
-                    RLCombatModifyDamageEvent.Post modifyResultPost = new RLCombatModifyDamageEvent.Post(player, targetEntity, offhand, weapon, damage, cooledStr, DamageSource.causePlayerDamage(player));
+                    RLCombatModifyDamageEvent.Post modifyResultPost = new RLCombatModifyDamageEvent.Post(player, targetEntity, offhand, weapon, damage, cooledStr, motionX, motionY, motionZ, DamageSource.causePlayerDamage(player));
                     MinecraftForge.EVENT_BUS.post(modifyResultPost);
                     damage += modifyResultPost.getDamageModifier();
                     DamageSource dmgSource = modifyResultPost.getDamageSource();//Allow for changing the damage source to custom for compat with mods like SpartanWeaponry
