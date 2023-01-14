@@ -99,7 +99,9 @@ public class EventHandlersClient
                 }
 
                 player.attackTargetEntityWithCurrentItem(mov.entityHit);
-                PacketHandler.instance.sendToServer(new PacketMainhandAttack(mov.entityHit.getEntityId(), player.motionX, player.motionY, player.motionZ));
+                Entity mount = player.getRidingEntity();
+                if(player.isRiding() && mount != null) PacketHandler.instance.sendToServer(new PacketMainhandAttack(mov.entityHit.getEntityId(), mount.motionX, mount.motionY, mount.motionZ));
+                else PacketHandler.instance.sendToServer(new PacketMainhandAttack(mov.entityHit.getEntityId(), player.motionX, player.motionY, player.motionZ));
             }
         }
     }
@@ -144,7 +146,9 @@ public class EventHandlersClient
                 ISecondHurtTimer sht = mov.entityHit.getCapability(EventHandlers.SECONDHURTTIMER_CAP, null);
                 if( sht != null && sht.getHurtTimerBCM() <= 0 ) {
                     if( shouldAttack(mov.entityHit, player) ) {
-                        PacketHandler.instance.sendToServer(new PacketOffhandAttack(mov.entityHit.getEntityId(), player.motionX, player.motionY, player.motionZ));
+                        Entity mount = player.getRidingEntity();
+                        if(player.isRiding() && mount != null) PacketHandler.instance.sendToServer(new PacketOffhandAttack(mov.entityHit.getEntityId(), mount.motionX, mount.motionY, mount.motionZ));
+                        else PacketHandler.instance.sendToServer(new PacketOffhandAttack(mov.entityHit.getEntityId(), player.motionX, player.motionY, player.motionZ));
                     }
                 }
             }
