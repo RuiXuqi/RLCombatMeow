@@ -32,6 +32,9 @@ public class ConfigurationHandler
 
     public static boolean requireEnergyToRandomCrit = true;
 
+    public static boolean requireEnergyToJumpCrit = true;
+    public static float distanceToJumpCrit = 2.0F;
+
     //public static boolean enableFuzzyTargetting = true;
     //public static float fuzzyRadius = 0.2F;
     //public static boolean enableSweepingTargetting = true;
@@ -91,6 +94,9 @@ public class ConfigurationHandler
         entityBlacklist = config.getStringList("Entity Blacklist", "general", EB_DEF, "Blacklisted entity classes for attacking. You will not be able to attack any entity that extends this class! Please note that entities extending IEntityOwnable are by default blacklisted, when the entity is owned by the attacker.");
 
         requireEnergyToRandomCrit = config.getBoolean("Require Full Energy to Random Crit", "general", true, "Whether or not full/nearly full energy should be required to randomly crit");
+
+        requireEnergyToJumpCrit = config.getBoolean("Require Full Energy to Jump Crit", "general", true, "Whether or not full/nearly full energy should be required to jump crit");
+        distanceToJumpCrit = config.getFloat("Maximum Distance to Jump Crit", "general", 2.0F, 0.0F, 10.0F, "Maximum distance from a target to allow jump crits.");
 
         //enableFuzzyTargetting = config.getBoolean("Enable Fuzzy Targetting", "general", true, "Enables fuzzy checks at the end of attack raytrace");
         //fuzzyRadius = config.getFloat("Fuzzy Radius", "general", 0.2F, 0, 1, "Radius of fuzzy targetting");
