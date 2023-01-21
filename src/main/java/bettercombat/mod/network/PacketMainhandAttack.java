@@ -23,6 +23,13 @@ public class PacketMainhandAttack implements IMessage
     @SuppressWarnings("unused")
     public PacketMainhandAttack() {}
 
+    public PacketMainhandAttack(int parEntityId) {
+        this.entityId = parEntityId;
+        this.motionX = 0;
+        this.motionY = 0;
+        this.motionZ = 0;
+    }
+
     public PacketMainhandAttack(int parEntityId, double motionX, double motionY, double motionZ) {
         this.entityId = parEntityId;
         this.motionX = motionX;

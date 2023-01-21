@@ -22,6 +22,13 @@ public class PacketOffhandAttack implements IMessage
     @SuppressWarnings("unused")
     public PacketOffhandAttack() {}
 
+    public PacketOffhandAttack(int parEntityId) {
+        this.entityId = parEntityId;
+        this.motionX = 0;
+        this.motionY = 0;
+        this.motionZ = 0;
+    }
+
     public PacketOffhandAttack(int parEntityId, double motionX, double motionY, double motionZ) {
         this.entityId = parEntityId;
         this.motionX = motionX;
