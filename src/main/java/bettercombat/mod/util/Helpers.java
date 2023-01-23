@@ -119,32 +119,6 @@ public final class Helpers
         return (int) (((1.0F/speed)*20.0F)+0.5F);
     }
 
-    public static int getOffhandFireAspect(EntityPlayer player) {
-        NBTTagList tagList = player.getHeldItemOffhand().getEnchantmentTagList();
-
-        for( int i = 0; i < tagList.tagCount(); i++ ) {
-            NBTTagCompound tag = tagList.getCompoundTagAt(i);
-            if( tag.getInteger("id") == Enchantment.getEnchantmentID(Enchantments.FIRE_ASPECT) ) {
-                return tag.getInteger("lvl");
-            }
-        }
-
-        return 0;
-    }
-
-    public static int getOffhandKnockback(EntityPlayer player) {
-        NBTTagList tagList = player.getHeldItemOffhand().getEnchantmentTagList();
-
-        for( int i = 0; i < tagList.tagCount(); i++ ) {
-            NBTTagCompound tag = tagList.getCompoundTagAt(i);
-            if( tag.getInteger("id") == Enchantment.getEnchantmentID(Enchantments.KNOCKBACK) ) {
-                return tag.getInteger("lvl");
-            }
-        }
-
-        return 0;
-    }
-
     public static void attackTargetEntityItem(EntityPlayer player, Entity targetEntity, boolean offhand, double motionX, double motionY, double motionZ) {
         ItemStack weapon = offhand ? player.getHeldItemOffhand() : player.getHeldItemMainhand();
         if(MinecraftForge.EVENT_BUS.post(new AttackEntityEvent(player, targetEntity))) return;
@@ -215,8 +189,8 @@ public final class Helpers
                     boolean isStrong = cooledStr > 0.9F;
                     boolean knockback = false;
                     boolean isCrit;
-                    int knockbackMod = offhand ? getOffhandKnockback(player) : EnchantmentHelper.getKnockbackModifier(player);
-                    int fireAspect = offhand ? getOffhandFireAspect(player) : EnchantmentHelper.getFireAspectModifier(player);
+                    int knockbackMod = EnchantmentHelper.getKnockbackModifier(player);
+                    int fireAspect = EnchantmentHelper.getFireAspectModifier(player);
 
                     if( player.isSprinting() && isStrong ) {
                         player.world.playSound(null, player.posX, player.posY, player.posZ, SoundEvents.ENTITY_PLAYER_ATTACK_KNOCKBACK, player.getSoundCategory(), 1.0F, 1.0F);
