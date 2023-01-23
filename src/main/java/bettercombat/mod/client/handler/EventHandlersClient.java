@@ -91,10 +91,15 @@ public class EventHandlersClient
                 player.isSwingInProgress = true;
                 player.swingingHand = EnumHand.MAIN_HAND;
 
+                /*
                 if(mov.entityHit instanceof MultiPartEntityPart) {
                     mov.entityHit = ((Entity)((MultiPartEntityPart)mov.entityHit).parent);
                 }
                 else if(Loader.isModLoaded("iceandfire") && InFHandler.isMultipart(mov.entityHit)) {
+                    mov.entityHit = InFHandler.getMultipartParent(mov.entityHit);
+                }
+                */
+                if(Loader.isModLoaded("iceandfire") && InFHandler.isMultipart(mov.entityHit)) {
                     mov.entityHit = InFHandler.getMultipartParent(mov.entityHit);
                 }
 
@@ -136,14 +141,22 @@ public class EventHandlersClient
             }
 
             if( mov != null && mov.entityHit != null ) {
+                /*
                 if(mov.entityHit instanceof MultiPartEntityPart) {
                     mov.entityHit = ((Entity)((MultiPartEntityPart)mov.entityHit).parent);
                 }
                 else if(Loader.isModLoaded("iceandfire") && InFHandler.isMultipart(mov.entityHit)) {
                     mov.entityHit = InFHandler.getMultipartParent(mov.entityHit);
                 }
+                */
+                if(Loader.isModLoaded("iceandfire") && InFHandler.isMultipart(mov.entityHit)) {
+                    mov.entityHit = InFHandler.getMultipartParent(mov.entityHit);
+                }
 
-                ISecondHurtTimer sht = mov.entityHit.getCapability(EventHandlers.SECONDHURTTIMER_CAP, null);
+                ISecondHurtTimer sht;
+                if(mov.entityHit instanceof MultiPartEntityPart) sht = ((Entity)(((MultiPartEntityPart)mov.entityHit).parent)).getCapability(EventHandlers.SECONDHURTTIMER_CAP, null);
+                else sht = mov.entityHit.getCapability(EventHandlers.SECONDHURTTIMER_CAP, null);
+
                 if( sht != null && sht.getHurtTimerBCM() <= 0 ) {
                     if( shouldAttack(mov.entityHit, player) ) {
                         Entity mount = player.getRidingEntity();

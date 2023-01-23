@@ -14,7 +14,6 @@ import bettercombat.mod.capability.CapabilityOffhandCooldown;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import meldexun.reachfix.util.ReachFixUtil;
-import net.minecraft.enchantment.Enchantment;
 import net.minecraft.enchantment.EnchantmentHelper;
 import net.minecraft.enchantment.EnchantmentSweepingEdge;
 import net.minecraft.entity.Entity;
@@ -36,8 +35,6 @@ import net.minecraft.item.ItemShield;
 import net.minecraft.item.ItemSpade;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.ItemSword;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.nbt.NBTTagList;
 import net.minecraft.network.play.server.SPacketEntityVelocity;
 import net.minecraft.stats.StatList;
 import net.minecraft.util.DamageSource;
@@ -253,8 +250,10 @@ public final class Helpers
                     boolean attacked;
 
                     if( offhand ) {
+                        Entity targetEntCap = targetEntity;
+                        if(targetEntCap instanceof MultiPartEntityPart) targetEntCap = (Entity)(((MultiPartEntityPart)targetEntCap).parent);
                         final float attackDmgFinal = damage;
-                        attacked = execNullable(targetEntity.getCapability(EventHandlers.SECONDHURTTIMER_CAP, null),
+                        attacked = execNullable(targetEntCap.getCapability(EventHandlers.SECONDHURTTIMER_CAP, null),
                                                 sht -> sht.attackEntityFromOffhand(targetEntity, dmgSource, attackDmgFinal), false);
                     } else {
                         attacked = targetEntity.attackEntityFrom(dmgSource, damage);

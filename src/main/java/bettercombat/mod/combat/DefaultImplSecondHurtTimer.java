@@ -2,6 +2,7 @@ package bettercombat.mod.combat;
 
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
+import net.minecraft.entity.MultiPartEntityPart;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.DamageSource;
@@ -31,13 +32,15 @@ public class DefaultImplSecondHurtTimer
 
     @Override
     public boolean attackEntityFromOffhand(Entity target, DamageSource dmgSrc, float amount) {
-        if( target.isEntityInvulnerable(dmgSrc) || this.hurtTime > 0 || target.world.isRemote || !(target instanceof EntityLivingBase) ) {
+        if( target.isEntityInvulnerable(dmgSrc) || this.hurtTime > 0 || target.world.isRemote || !(target instanceof EntityLivingBase || target instanceof MultiPartEntityPart) ) {
             return false;
         }
 
-        EntityLivingBase targetLiving = (EntityLivingBase) target;
+        EntityLivingBase targetMain;
+        if(target instanceof MultiPartEntityPart) targetMain = (EntityLivingBase)(((MultiPartEntityPart)target).parent);//use/change values from parent, but attack part
+        else targetMain = (EntityLivingBase)target;
 
-        if( targetLiving.getHealth() <= 0.0F ) {
+        if( targetMain.getHealth() <= 0.0F ) {
             return false;
         }
 
@@ -54,20 +57,20 @@ public class DefaultImplSecondHurtTimer
             }
 
             // save current hit times and set the value to 0 for the entity to allow hitting with the off-hand
-            int mainHurtTime = targetLiving.hurtTime;
-            int mainHurtResistance = targetLiving.hurtResistantTime;
-            targetLiving.hurtTime = 0;
-            targetLiving.hurtResistantTime = 0;
+            int mainHurtTime = targetMain.hurtTime;
+            int mainHurtResistance = targetMain.hurtResistantTime;
+            targetMain.hurtTime = 0;
+            targetMain.hurtResistantTime = 0;
 
             //attack entity
-            successfulAttack = targetLiving.attackEntityFrom(dmgSrc, amount);
+            successfulAttack = target.attackEntityFrom(dmgSrc, amount);//attack non-cast, incase its multipart like the ender dragon
             if( successfulAttack ) {
                 this.hurtTime = 10;
             }
 
             // reset current hit times to the entity
-            targetLiving.hurtTime = mainHurtTime;
-            targetLiving.hurtResistantTime = mainHurtResistance;
+            targetMain.hurtTime = mainHurtTime;
+            targetMain.hurtResistantTime = mainHurtResistance;
 
             if( trueSrc instanceof EntityPlayer ) { // reset held items to their proper slots
                 EntityPlayer player = (EntityPlayer) trueSrc;
