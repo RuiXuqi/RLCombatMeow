@@ -9,6 +9,7 @@ import bettercombat.mod.network.PacketHandler;
 import bettercombat.mod.network.PacketMainhandAttack;
 import bettercombat.mod.network.PacketOffhandAttack;
 import bettercombat.mod.util.*;
+import bettercombat.mod.util.inf.InFHandler;
 import meldexun.reachfix.hook.client.EntityRendererHook;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.ScaledResolution;

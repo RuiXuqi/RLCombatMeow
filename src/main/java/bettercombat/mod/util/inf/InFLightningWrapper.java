@@ -1,9 +1,9 @@
-package bettercombat.mod.util;
+package bettercombat.mod.util.inf;
 
 import com.github.alexthe666.iceandfire.entity.util.EntityMultipartPart;
 import net.minecraft.entity.Entity;
 
-public abstract class InFHandler {
+public abstract class InFLightningWrapper {
 
     public static boolean isMultipart(Entity entity) {
         return entity instanceof EntityMultipartPart;
