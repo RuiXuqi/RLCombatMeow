@@ -3,13 +3,18 @@ buildscript {
         maven {
             url = 'https://maven.minecraftforge.net/'
         }
+        maven {
+            url = 'https://repo.spongepowered.org/maven'
+        }
         mavenCentral()
     }
     dependencies {
         classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '5.1.+', changing: true
+        classpath group: 'org.spongepowered', name: 'mixingradle', version: '0.7.+'
     }
 }
 apply plugin: 'net.minecraftforge.gradle'
+apply plugin: 'org.spongepowered.mixin'
 
 version = "${minecraft_version}-${mod_version}"
 group = "bettercombat.mod"
@@ -27,26 +32,28 @@ repositories {
     maven {
         url = "https://www.cursemaven.com"
     }
-    flatDir {
-        dirs 'libs\\'
-    }
 }
 
 dependencies {
     minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
 
-    implementation fg.deobf("curse.maven:reachfix-${reachfix_version}")
-    implementation files("libs/ReachFix-1.12.2-1.0.7-rc4.jar")
     implementation fg.deobf("curse.maven:qualitytools-${qualitytools_version}")
-    implementation fg.deobf("curse.maven:llibrary-${llibrary_version}")
+    implementation fg.deobf("curse.maven:bettersurvival-${bettersurvival_version}")
+    implementation fg.deobf("curse.maven:reachfix-${reachfix_version}")
+    implementation fg.deobf("curse.maven:reskillable-${reskillable_version}")
+    implementation fg.deobf("curse.maven:spartanweaponry-${spartanweaponry_version}")
     implementation fg.deobf("curse.maven:icenfirerlcraft-${icenfirerlcraft_version}")
     implementation fg.deobf("curse.maven:icenfire-${icenfire_version}")
-    implementation fg.deobf("curse.maven:potioncore-${potioncore_version}")
-    implementation fg.deobf("curse.maven:spartanweaponry-${spartanweaponry_version}")
-    implementation files("libs/SpartanWeaponry-1.12.2-1.5.0-indev-1.jar")
-    implementation fg.deobf("curse.maven:reskillable-${reskillable_version}")
-    implementation fg.deobf("curse.maven:bettersurvival-${bettersurvival_version}")
-    implementation files("libs/better_survival-1.4.2-BETA6.jar")
+    implementation fg.deobf("curse.maven:llibrary-${llibrary_version}")
+
+    implementation fg.deobf("curse.maven:fermiumbooter-${fermiumbooter_version}")
+
+    implementation "org.spongepowered:mixin:0.8.5"
+    annotationProcessor "org.spongepowered:mixin:0.8.5:processor"
+}
+
+mixin {
+    add sourceSets.main, "mixins.${mod_id}.refmap.json"
 }
 
 processResources {
@@ -67,7 +74,11 @@ jar {
                 "Specification-Version"   : "1",
                 "Implementation-Title"    : mod_name,
                 "Implementation-Version"  : mod_version,
-                "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
+                "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ"),
+                "FMLCorePlugin": "${mixin_loader_class}",
+                "FMLCorePluginContainsFMLMod": "true",
+                "ForceLoadAsMod": "true",
+                "TweakClass": "org.spongepowered.asm.launch.MixinTweaker"
         ])
     }
 }

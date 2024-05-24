@@ -1,0 +1,14 @@
+{
+  "required": true,
+  "package": "bettercombat.mod.mixin",
+  "refmap": "mixins.bettercombat.refmap.json",
+  "compatibilityLevel": "JAVA_8",
+  "target": "@env(INIT)",
+  "minVersion": "0.8",
+  "mixins": [
+    "EntityPlayerMixin"
+  ],
+  "injectors": {
+    "maxShiftBy": 10
+  }
+}

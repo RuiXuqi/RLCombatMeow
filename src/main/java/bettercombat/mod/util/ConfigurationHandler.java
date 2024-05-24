@@ -35,6 +35,8 @@ public class ConfigurationHandler
     public static boolean requireEnergyToJumpCrit = true;
     public static float distanceToJumpCrit = 2.0F;
 
+    public static boolean enableMixinCompatFallback = true;
+
     //public static boolean enableFuzzyTargetting = true;
     //public static float fuzzyRadius = 0.2F;
     //public static boolean enableSweepingTargetting = true;
@@ -97,6 +99,8 @@ public class ConfigurationHandler
 
         requireEnergyToJumpCrit = config.getBoolean("Require Full Energy to Jump Crit", "general", true, "Whether or not full/nearly full energy should be required to jump crit");
         distanceToJumpCrit = config.getFloat("Maximum Distance to Jump Crit", "general", 2.0F, 0.0F, 10.0F, "Maximum distance from a target to allow jump crits.");
+
+        enableMixinCompatFallback = config.getBoolean("Enable Mixin Compat Fallback", "general", true, "Enables a fallback check if modded attacks bypass BetterCombat's packets to allow for BetterCombat to still process the attack");
 
         //enableFuzzyTargetting = config.getBoolean("Enable Fuzzy Targetting", "general", true, "Enables fuzzy checks at the end of attack raytrace");
         //fuzzyRadius = config.getFloat("Fuzzy Radius", "general", 0.2F, 0, 1, "Radius of fuzzy targetting");
