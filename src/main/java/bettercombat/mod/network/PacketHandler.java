@@ -5,8 +5,8 @@ import net.minecraftforge.fml.common.network.simpleimpl.SimpleNetworkWrapper;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
-public class PacketHandler
-{
+public class PacketHandler {
+
     public static SimpleNetworkWrapper instance = null;
 
     public static void registerMessages(String channelName) {

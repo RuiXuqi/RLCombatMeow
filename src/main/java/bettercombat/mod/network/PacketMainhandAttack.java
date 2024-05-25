@@ -13,15 +13,15 @@ import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
 import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
 
-public class PacketMainhandAttack implements IMessage
-{
+public class PacketMainhandAttack implements IMessage {
+
     private int entityId;
     private double motionX;
     private double motionY;
     private double motionZ;
 
     @SuppressWarnings("unused")
-    public PacketMainhandAttack() {}
+    public PacketMainhandAttack() { }
 
     public PacketMainhandAttack(int parEntityId) {
         this.entityId = parEntityId;
@@ -53,9 +53,8 @@ public class PacketMainhandAttack implements IMessage
         buf.writeDouble(this.motionZ);
     }
 
-    public static class Handler
-            implements IMessageHandler<PacketMainhandAttack, IMessage>
-    {
+    public static class Handler implements IMessageHandler<PacketMainhandAttack, IMessage> {
+
         @Override
         public IMessage onMessage(final PacketMainhandAttack message, final MessageContext ctx) {
             FMLCommonHandler.instance().getWorldThread(ctx.netHandler).addScheduledTask(() -> handle(message, ctx));
@@ -65,14 +64,15 @@ public class PacketMainhandAttack implements IMessage
         private static void handle(PacketMainhandAttack message, MessageContext ctx) {
             EntityPlayerMP player = ctx.getServerHandler().player;
             Entity theEntity = player.world.getEntityByID(message.entityId);
-            if( theEntity != null ) {
-                if( player.interactionManager.getGameType() == GameType.SPECTATOR ) {
+            if(theEntity != null) {
+                if(player.interactionManager.getGameType() == GameType.SPECTATOR) {
                     player.setSpectatingEntity(theEntity);
-                } else {
+                }
+                else {
                     Helpers.attackTargetEntityItem(player, theEntity, false, message.motionX, message.motionY, message.motionZ);
                 }
             }
-            ((WorldServer) player.world).getEntityTracker().sendToTracking(player, new SPacketAnimation(player, 0));
+            ((WorldServer)player.world).getEntityTracker().sendToTracking(player, new SPacketAnimation(player, 0));
         }
     }
 }

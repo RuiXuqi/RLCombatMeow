@@ -11,13 +11,12 @@ import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 
 @SuppressWarnings("unused")
-public class ClientProxy
-        extends CommonProxy
-{
+public class ClientProxy extends CommonProxy {
+
     @Override
     public void preInit(FMLPreInitializationEvent event) {
         super.preInit(event);
-        MinecraftForge.EVENT_BUS.register(EventHandlersClient.INSTANCE);
+        MinecraftForge.EVENT_BUS.register(new EventHandlersClient());
         PacketHandler.registerClientMessages();
     }
 

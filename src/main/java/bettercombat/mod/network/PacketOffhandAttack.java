@@ -12,15 +12,15 @@ import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
 import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
 
-public class PacketOffhandAttack implements IMessage
-{
+public class PacketOffhandAttack implements IMessage {
+
     private int entityId;
     private double motionX;
     private double motionY;
     private double motionZ;
 
     @SuppressWarnings("unused")
-    public PacketOffhandAttack() {}
+    public PacketOffhandAttack() { }
 
     public PacketOffhandAttack(int parEntityId) {
         this.entityId = parEntityId;
@@ -52,9 +52,8 @@ public class PacketOffhandAttack implements IMessage
         buf.writeDouble(this.motionZ);
     }
 
-    public static class Handler
-            implements IMessageHandler<PacketOffhandAttack, IMessage>
-    {
+    public static class Handler implements IMessageHandler<PacketOffhandAttack, IMessage> {
+
         @Override
         public IMessage onMessage(final PacketOffhandAttack message, final MessageContext ctx) {
             FMLCommonHandler.instance().getWorldThread(ctx.netHandler).addScheduledTask(() -> handle(message, ctx));
@@ -64,10 +63,10 @@ public class PacketOffhandAttack implements IMessage
         private static void handle(PacketOffhandAttack message, MessageContext ctx) {
             EntityPlayerMP player = ctx.getServerHandler().player;
             Entity theEntity = player.world.getEntityByID(message.entityId);
-            if( theEntity != null ) {
+            if(theEntity != null) {
                 Helpers.attackTargetEntityItem(player, theEntity, true, message.motionX, message.motionY, message.motionZ);
             }
-            ((WorldServer) player.world).getEntityTracker().sendToTracking(player, new SPacketAnimation(player, 3));
+            ((WorldServer)player.world).getEntityTracker().sendToTracking(player, new SPacketAnimation(player, 3));
         }
     }
 }

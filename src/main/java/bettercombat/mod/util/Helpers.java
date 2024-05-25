@@ -6,6 +6,10 @@
  *******************************************************************************************************************/
 package bettercombat.mod.util;
 
+import bettercombat.mod.compat.ModLoadedUtil;
+import bettercombat.mod.compat.QualityToolsHandler;
+import bettercombat.mod.compat.ReskillableHandler;
+import bettercombat.mod.compat.SpartanWeaponryHandler;
 import bettercombat.mod.event.RLCombatCriticalHitEvent;
 import bettercombat.mod.event.RLCombatModifyDamageEvent;
 import bettercombat.mod.event.RLCombatSweepEvent;
@@ -46,7 +50,6 @@ import net.minecraft.world.WorldServer;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.ForgeEventFactory;
 import net.minecraftforge.event.entity.player.AttackEntityEvent;
-import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.eventhandler.Event;
 
 import javax.annotation.Nonnull;
@@ -55,21 +58,14 @@ import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-public final class Helpers
-{
-    private Helpers() {}
+public final class Helpers {
 
     public static <T> void execNullable(@Nullable T obj, Consumer<T> onNonNull) {
-        if( obj != null ) {
-            onNonNull.accept(obj);
-        }
+        if(obj != null) onNonNull.accept(obj);
     }
 
     public static <T, R> R execNullable(@Nullable T obj, Function<T, R> onNonNull, R orElse) {
-        if( obj != null ) {
-            return onNonNull.apply(obj);
-        }
-
+        if(obj != null) return onNonNull.apply(obj);
         return orElse;
     }
 
@@ -81,7 +77,7 @@ public final class Helpers
                     modifiersToRemove.put(modifier.getKey(), modifier.getValue());
                 }
             }
-            if(Loader.isModLoaded("qualitytools")) QualityToolsHandler.clearOldModifiersQualityTools(entity, stack, modifiersToRemove);
+            if(ModLoadedUtil.isQualityToolsLoaded()) QualityToolsHandler.clearOldModifiersQualityTools(entity, stack, modifiersToRemove);
             if(!modifiersToRemove.isEmpty()) entity.getAttributeMap().removeAttributeModifiers(modifiersToRemove);
         }
     }
@@ -102,7 +98,7 @@ public final class Helpers
                     if(!entityAttribute.hasModifier(modifier.getValue())) entityAttribute.applyModifier(modifier.getValue());
                 }
             }
-            if(Loader.isModLoaded("qualitytools")) QualityToolsHandler.addNewModifiersQualityTools(entity, stack);
+            if(ModLoadedUtil.isQualityToolsLoaded()) QualityToolsHandler.addNewModifiersQualityTools(entity, stack);
         }
     }
 
@@ -122,10 +118,10 @@ public final class Helpers
         if(!weapon.isEmpty() && weapon.getItem().onLeftClickEntity(weapon, player, targetEntity)) return;
 
         //Check for a Reskillable lock ourselves, since reskillable normally only blocks it *after* this handling is ran
-        if(Loader.isModLoaded("reskillable") && ReskillableHandler.shouldLockAttack(player, weapon)) return;
+        if(ModLoadedUtil.isReskillableLoaded() && ReskillableHandler.shouldLockAttack(player, weapon)) return;
 
-        if( targetEntity.canBeAttackedWithItem() ) {
-            if( !targetEntity.hitByEntity(player) ) {
+        if(targetEntity.canBeAttackedWithItem()) {
+            if(!targetEntity.hitByEntity(player)) {
                 float damage;
                 int cooldown = 0;
                 double reach;
@@ -142,12 +138,12 @@ public final class Helpers
                     addNewModifiers(player, player.getHeldItemMainhand());
                 }
                 else {
-                    damage = (float) player.getEntityAttribute(SharedMonsterAttributes.ATTACK_DAMAGE).getAttributeValue();
+                    damage = (float)player.getEntityAttribute(SharedMonsterAttributes.ATTACK_DAMAGE).getAttributeValue();
                     reach = ReachFixUtil.getEntityReach(player, EnumHand.MAIN_HAND);
                 }
 
                 float cMod;
-                if( targetEntity instanceof EntityLivingBase ) {
+                if(targetEntity instanceof EntityLivingBase) {
                     cMod = EnchantmentHelper.getModifierForCreature(weapon, ((EntityLivingBase) targetEntity).getCreatureAttribute());
                 }
                 else {
@@ -171,37 +167,39 @@ public final class Helpers
                 damage *= (0.2F + cooledStr * cooledStr * 0.8F);
                 cMod *= cooledStr;
 
-                if( offhand ) {
+                if(offhand) {
                     CapabilityOffhandCooldown coh = player.getCapability(EventHandlers.TUTO_CAP, null);
                     if(coh != null) {
                         coh.setOffhandCooldown(cooldown);
                         coh.setOffhandBeginningCooldown(cooldown);
                         if(!player.world.isRemote) coh.sync();//Sync once here, instead of every tick that there is a cooldown in livingupdate, hopefully works fine?
                     }
-                } else {
+                }
+                else {
                     player.resetCooldown();
                 }
 
-                if( damage > 0.0F || cMod > 0.0F) {
+                if(damage > 0.0F || cMod > 0.0F) {
                     boolean isStrong = cooledStr > 0.9F;
                     boolean knockback = false;
                     boolean isCrit;
                     int knockbackMod = EnchantmentHelper.getKnockbackModifier(player);
                     int fireAspect = EnchantmentHelper.getFireAspectModifier(player);
 
-                    if( player.isSprinting() && isStrong ) {
+                    if(player.isSprinting() && isStrong) {
                         player.world.playSound(null, player.posX, player.posY, player.posZ, SoundEvents.ENTITY_PLAYER_ATTACK_KNOCKBACK, player.getSoundCategory(), 1.0F, 1.0F);
                         knockbackMod++;
                         knockback = true;
                     }
 
-                    if( ConfigurationHandler.randomCrits ) {
+                    if(ConfigurationHandler.randomCrits) {
                         isCrit = player.getRNG().nextFloat() < ConfigurationHandler.critChance && !player.isSprinting() && (!ConfigurationHandler.requireEnergyToRandomCrit || isStrong);
                         //Allow forced jump crits at close range
                         if(!isCrit) isCrit = (!ConfigurationHandler.requireEnergyToJumpCrit || isStrong) && player.getDistance(targetEntity) < ConfigurationHandler.distanceToJumpCrit && player.fallDistance > 0.0F && !player.onGround && !player.isOnLadder() &&
                                 !player.isInWater() && !player.isPotionActive(MobEffects.BLINDNESS) && !player.isRiding() &&
                                 targetEntity instanceof EntityLivingBase && !player.isSprinting();
-                    } else {
+                    }
+                    else {
                         isCrit = isStrong && player.fallDistance > 0.0F && !player.onGround && !player.isOnLadder() && !player.isInWater()
                                          && !player.isPotionActive(MobEffects.BLINDNESS) && !player.isRiding() && targetEntity instanceof EntityLivingBase
                                          && !player.isSprinting();
@@ -212,7 +210,7 @@ public final class Helpers
                     if(!(hitResult.getResult() == Event.Result.ALLOW || (isCrit && hitResult.getResult() == Event.Result.DEFAULT))) hitResult = null;
 
                     isCrit = hitResult != null;
-                    if( isCrit ) {
+                    if(isCrit) {
                         damage *= hitResult.getDamageModifier();
                     }
 
@@ -227,18 +225,18 @@ public final class Helpers
                     boolean doSweepingIgnoreSword = false;
                     boolean doSweeping = false;
                     double tgtDistDelta = player.distanceWalkedModified - player.prevDistanceWalkedModified;
-                    if( isStrong && !isCrit && !knockback && player.onGround && tgtDistDelta < player.getAIMoveSpeed() ) {
+                    if(isStrong && !isCrit && !knockback && player.onGround && tgtDistDelta < player.getAIMoveSpeed()) {
                         doSweepingIgnoreSword = true;
-                        if( weapon.getItem() instanceof ItemSword ) {
+                        if(weapon.getItem() instanceof ItemSword) {
                             doSweeping = true;
                         }
                     }
 
                     float tgtHealth = 0.0F;
                     boolean burnInflicted = false;
-                    if( targetEntity instanceof EntityLivingBase ) {
-                        tgtHealth = ((EntityLivingBase) targetEntity).getHealth();
-                        if( fireAspect > 0 && !targetEntity.isBurning() ) {
+                    if(targetEntity instanceof EntityLivingBase) {
+                        tgtHealth = ((EntityLivingBase)targetEntity).getHealth();
+                        if(fireAspect > 0 && !targetEntity.isBurning()) {
                             targetEntity.setFire(1);
                             burnInflicted = true;
                         }
@@ -249,25 +247,27 @@ public final class Helpers
                     double tgtMotionZ = targetEntity.motionZ;
                     boolean attacked;
 
-                    if( offhand ) {
+                    if(offhand) {
                         Entity targetEntCap = targetEntity;
                         if(targetEntCap instanceof MultiPartEntityPart) targetEntCap = (Entity)(((MultiPartEntityPart)targetEntCap).parent);
                         final float attackDmgFinal = damage;
                         attacked = execNullable(targetEntCap.getCapability(EventHandlers.SECONDHURTTIMER_CAP, null),
                                                 sht -> sht.attackEntityFromOffhand(targetEntity, dmgSource, attackDmgFinal), false);
-                    } else {
+                    }
+                    else {
                         attacked = targetEntity.attackEntityFrom(dmgSource, damage);
                     }
-                    if( attacked ) {
-                        if( knockbackMod > 0 ) {
-                            if( targetEntity instanceof EntityLivingBase ) {
-                                ((EntityLivingBase) targetEntity).knockBack(player, knockbackMod * 0.5F, MathHelper.sin(player.rotationYaw * 0.017453292F), -MathHelper.cos(player.rotationYaw * 0.017453292F));
-                            } else {
+                    if(attacked) {
+                        if(knockbackMod > 0) {
+                            if(targetEntity instanceof EntityLivingBase) {
+                                ((EntityLivingBase)targetEntity).knockBack(player, knockbackMod * 0.5F, MathHelper.sin(player.rotationYaw * 0.017453292F), -MathHelper.cos(player.rotationYaw * 0.017453292F));
+                            }
+                            else {
                                 targetEntity.addVelocity(-MathHelper.sin(player.rotationYaw * 0.017453292F) * knockbackMod * 0.5F, 0.1D, MathHelper.cos(player.rotationYaw * 0.017453292F) * knockbackMod * 0.5F);
                             }
                             player.motionX *= 0.6D;
                             player.motionZ *= 0.6D;
-                            if( !ConfigurationHandler.moreSprint ) {
+                            if(!ConfigurationHandler.moreSprint) {
                                 player.setSprinting(false);
                             }
                         }
@@ -276,18 +276,19 @@ public final class Helpers
                         MinecraftForge.EVENT_BUS.post(sweepResult);
                         doSweeping = sweepResult.getDoSweep();
 
-                        if( doSweeping ) {
+                        if(doSweeping) {
                             float sweepingDamage = 1.0F + (sweepResult.getSweepModifier() * damage);
                             AxisAlignedBB sweepingAABB = sweepResult.getSweepingAABB();
                             DamageSource sweepingDamageSource = sweepResult.getSweepingDamageSource();
 
-                            for( EntityLivingBase living : player.world.getEntitiesWithinAABB(EntityLivingBase.class, sweepingAABB) ) {
-                                if( living != player && living != targetEntity && !player.isOnSameTeam(living) && player.getDistanceSq(living) < (reach * reach) ) {
+                            for(EntityLivingBase living : player.world.getEntitiesWithinAABB(EntityLivingBase.class, sweepingAABB)) {
+                                if(living != player && living != targetEntity && !player.isOnSameTeam(living) && player.getDistanceSq(living) < (reach * reach)) {
                                     living.knockBack(player, 0.4F, MathHelper.sin(player.rotationYaw * 0.017453292F), -MathHelper.cos(player.rotationYaw * 0.017453292F));
-                                    if( offhand ) {
+                                    if(offhand) {
                                         execNullable(living.getCapability(EventHandlers.SECONDHURTTIMER_CAP, null),
                                                      sht -> sht.attackEntityFromOffhand(living, sweepingDamageSource, sweepingDamage));
-                                    } else {
+                                    }
+                                    else {
                                         living.attackEntityFrom(sweepingDamageSource, sweepingDamage);
                                     }
                                 }
@@ -296,58 +297,59 @@ public final class Helpers
                             player.spawnSweepParticles();
                         }
 
-                        if( targetEntity instanceof EntityPlayerMP && targetEntity.velocityChanged ) {
-                            ((EntityPlayerMP) targetEntity).connection.sendPacket(new SPacketEntityVelocity(targetEntity));
+                        if(targetEntity instanceof EntityPlayerMP && targetEntity.velocityChanged) {
+                            ((EntityPlayerMP)targetEntity).connection.sendPacket(new SPacketEntityVelocity(targetEntity));
                             targetEntity.velocityChanged = false;
                             targetEntity.motionX = tgtMotionX;
                             targetEntity.motionY = tgtMotionY;
                             targetEntity.motionZ = tgtMotionZ;
                         }
 
-                        if( isCrit ) {
-                            if( offhand ) {
+                        if(isCrit) {
+                            if(offhand) {
                                 player.world.playSound(null, player.posX, player.posY, player.posZ, SoundEvents.ENTITY_PLAYER_ATTACK_CRIT, player.getSoundCategory(), 1.0F, 1.0F);
                             }
                             player.onCriticalHit(targetEntity);
                         }
 
                         boolean playSound = true;
-                        if( !weapon.isEmpty() ) {
-                            if( weapon.getItem() instanceof ItemSpade ) {
+                        if(!weapon.isEmpty()) {
+                            if(weapon.getItem() instanceof ItemSpade) {
                                 playSound = false;
                             }
-                            if( playSound ) {
-                                if( ConfigurationHandler.hitSound && (!ConfigurationHandler.critSound || !isCrit) ) {
+                            if(playSound) {
+                                if(ConfigurationHandler.hitSound && (!ConfigurationHandler.critSound || !isCrit)) {
                                     player.world.playSound(null, player.posX, player.posY, player.posZ, Sounds.SWORD_SLASH, player.getSoundCategory(), 1.0F, 1.0F);
                                 }
-                                if( ConfigurationHandler.critSound && isCrit ) {
+                                if(ConfigurationHandler.critSound && isCrit) {
                                     player.world.playSound(null, player.posX, player.posY, player.posZ, Sounds.CRITICAL_STRIKE, player.getSoundCategory(), 1.0F, 1.0F);
                                 }
                             }
                         }
 
-                        if( !isCrit && !doSweeping ) {
-                            if( isStrong ) {
+                        if(!isCrit && !doSweeping) {
+                            if(isStrong) {
                                 player.world.playSound(null, player.posX, player.posY, player.posZ, SoundEvents.ENTITY_PLAYER_ATTACK_STRONG, player.getSoundCategory(), 1.0F, 1.0F);
-                            } else {
+                            }
+                            else {
                                 player.world.playSound(null, player.posX, player.posY, player.posZ, SoundEvents.ENTITY_PLAYER_ATTACK_WEAK, player.getSoundCategory(), 1.0F, 1.0F);
                             }
                         }
 
-                        if( cMod > 0.0F ) {
+                        if(cMod > 0.0F) {
                             player.onEnchantmentCritical(targetEntity);
                         }
 
-                        if( !player.world.isRemote && targetEntity instanceof EntityPlayer ) {
-                            EntityPlayer entityplayer = (EntityPlayer) targetEntity;
+                        if(!player.world.isRemote && targetEntity instanceof EntityPlayer) {
+                            EntityPlayer entityplayer = (EntityPlayer)targetEntity;
                             ItemStack activeItem = entityplayer.isHandActive() ? entityplayer.getActiveItemStack() : ItemStack.EMPTY;
-                            if( weapon.getItem() instanceof ItemAxe && activeItem.getItem() instanceof ItemShield ) {
+                            if(weapon.getItem() instanceof ItemAxe && activeItem.getItem() instanceof ItemShield) {
                                 float efficiency = 0.25F + EnchantmentHelper.getEfficiencyModifier(player) * 0.05F;
-                                if( knockback ) {
+                                if(knockback) {
                                     efficiency += 0.75F;
                                 }
 
-                                if( player.getRNG().nextFloat() < efficiency ) {
+                                if(player.getRNG().nextFloat() < efficiency) {
                                     entityplayer.getCooldownTracker().setCooldown(activeItem.getItem(), 100);
                                     player.world.setEntityState(entityplayer, (byte) 30);
                                 }
@@ -356,54 +358,55 @@ public final class Helpers
 
                         player.setLastAttackedEntity(targetEntity);
 
-                        if( targetEntity instanceof EntityLivingBase ) {
-                            EnchantmentHelper.applyThornEnchantments((EntityLivingBase) targetEntity, player);
+                        if(targetEntity instanceof EntityLivingBase) {
+                            EnchantmentHelper.applyThornEnchantments((EntityLivingBase)targetEntity, player);
                         }
 
                         EnchantmentHelper.applyArthropodEnchantments(player, targetEntity);
 
                         Entity entity = targetEntity;
 
-                        if( targetEntity instanceof MultiPartEntityPart ) {
-                            IEntityMultiPart ientitymultipart = ((MultiPartEntityPart) targetEntity).parent;
-                            if( ientitymultipart instanceof EntityLivingBase ) {
-                                entity = (EntityLivingBase) ientitymultipart;
+                        if(targetEntity instanceof MultiPartEntityPart) {
+                            IEntityMultiPart ientitymultipart = ((MultiPartEntityPart)targetEntity).parent;
+                            if(ientitymultipart instanceof EntityLivingBase) {
+                                entity = (EntityLivingBase)ientitymultipart;
                             }
                         }
 
-                        if( !weapon.isEmpty() && entity instanceof EntityLivingBase ) {
+                        if(!weapon.isEmpty() && entity instanceof EntityLivingBase) {
                             ItemStack beforeHitCopy = weapon.copy();
-                            weapon.hitEntity((EntityLivingBase) entity, player);
-                            if( weapon.isEmpty() ) {
+                            weapon.hitEntity((EntityLivingBase)entity, player);
+                            if(weapon.isEmpty()) {
                                 player.setHeldItem(offhand ? EnumHand.OFF_HAND : EnumHand.MAIN_HAND, ItemStack.EMPTY);
                                 ForgeEventFactory.onPlayerDestroyItem(player, beforeHitCopy, offhand ? EnumHand.OFF_HAND : EnumHand.MAIN_HAND);
                             }
                         }
 
-                        if( targetEntity instanceof EntityLivingBase ) {
-                            float healthDelta = tgtHealth - ((EntityLivingBase) targetEntity).getHealth();
+                        if(targetEntity instanceof EntityLivingBase) {
+                            float healthDelta = tgtHealth - ((EntityLivingBase)targetEntity).getHealth();
                             player.addStat(StatList.DAMAGE_DEALT, Math.round(healthDelta * 10.0F));
 
-                            if( fireAspect > 0 ) {
+                            if(fireAspect > 0) {
                                 targetEntity.setFire(fireAspect * 4);
                             }
 
-                            if( player.world instanceof WorldServer && healthDelta > 2.0F ) {
-                                int k = (int) (healthDelta * 0.5D);
-                                ((WorldServer) player.world).spawnParticle(EnumParticleTypes.DAMAGE_INDICATOR, targetEntity.posX, targetEntity.posY + targetEntity.height * 0.5F, targetEntity.posZ, k, 0.1D, 0.0D, 0.1D, 0.2D);
+                            if(player.world instanceof WorldServer && healthDelta > 2.0F) {
+                                int k = (int)(healthDelta * 0.5D);
+                                ((WorldServer)player.world).spawnParticle(EnumParticleTypes.DAMAGE_INDICATOR, targetEntity.posX, targetEntity.posY + targetEntity.height * 0.5F, targetEntity.posZ, k, 0.1D, 0.0D, 0.1D, 0.2D);
                             }
                         }
 
                         player.addExhaustion(0.3F);
-                    } else {
+                    }
+                    else {
                         player.world.playSound(null, player.posX, player.posY, player.posZ, SoundEvents.ENTITY_PLAYER_ATTACK_NODAMAGE, player.getSoundCategory(), 1.0F, 1.0F);
 
-                        if( burnInflicted ) {
+                        if(burnInflicted) {
                             targetEntity.extinguish();
                         }
                     }
 
-                    if(Loader.isModLoaded("spartanweaponry")){
+                    if(ModLoadedUtil.isSpartanWeaponryLoaded()){
                         SpartanWeaponryHandler.handleSpartanQuickStrike(weapon, targetEntity);
                     }
                 }

@@ -21,9 +21,7 @@ import net.minecraftforge.event.entity.living.LivingEvent;
 import net.minecraftforge.event.entity.player.AttackEntityEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
-public class EventHandlers
-{
-    public static final EventHandlers INSTANCE = new EventHandlers();
+public class EventHandlers {
 
     @CapabilityInject(IOffHandAttack.class)
     public static final Capability<IOffHandAttack> OFFHAND_CAP = Helpers.getNull();
@@ -32,14 +30,12 @@ public class EventHandlers
     @CapabilityInject(CapabilityOffhandCooldown.class)
     public static final Capability<CapabilityOffhandCooldown> TUTO_CAP = Helpers.getNull();
 
-    private EventHandlers() {}
-
     @SubscribeEvent
     public void onAttack(AttackEntityEvent event) {
         if(event.getTarget() == null) return;
         if(event.getTarget().hurtResistantTime <= 10 ) {
             if(ConfigurationHandler.moreSweep) {
-                BetterCombatMod.proxy.spawnSweep((EntityPlayer) event.getEntityLiving());
+                BetterCombatMod.proxy.spawnSweep((EntityPlayer)event.getEntityLiving());
             }
         }
     }
@@ -47,12 +43,10 @@ public class EventHandlers
     @SubscribeEvent(receiveCanceled = true)
     public void onLivingUpdate(LivingEvent.LivingUpdateEvent event) {
         ISecondHurtTimer sht = event.getEntityLiving().getCapability(SECONDHURTTIMER_CAP, null);
-        if( sht != null && sht.getHurtTimerBCM() > 0 ) {
-            sht.tick();
-        }
+        if(sht != null && sht.getHurtTimerBCM() > 0) sht.tick();
 
-        if( event.getEntityLiving() instanceof EntityPlayer ) {
-            EntityPlayer player = (EntityPlayer) event.getEntityLiving();
+        if(event.getEntityLiving() instanceof EntityPlayer) {
+            EntityPlayer player = (EntityPlayer)event.getEntityLiving();
             IOffHandAttack oha = event.getEntityLiving().getCapability(OFFHAND_CAP, null);
             CapabilityOffhandCooldown cof = player.getCapability(TUTO_CAP, null);
             Helpers.execNullable(oha, IOffHandAttack::tick);
@@ -67,17 +61,15 @@ public class EventHandlers
     }
 
     @SubscribeEvent
-    public void onEntityConstruct(AttachCapabilitiesEvent event) {
-        if( event.getGenericType() != Entity.class ) {
-            return;
-        }
-        if( event.getObject() instanceof EntityPlayer ) {
+    public void onEntityConstruct(AttachCapabilitiesEvent<Entity> event) {
+        if(event.getGenericType() != Entity.class) return;
+        if(event.getObject() instanceof EntityPlayer) {
             event.addCapability(new ResourceLocation(Reference.MOD_ID, "TUTO_CAP"), new CapabilityOffhandCooldown((EntityPlayer) event.getObject()));
         }
 
-        event.addCapability(new ResourceLocation(Reference.MOD_ID, "IOffHandAttack"), new ICapabilitySerializable()
-        {
-            IOffHandAttack inst = EventHandlers.OFFHAND_CAP.getDefaultInstance();
+        event.addCapability(new ResourceLocation(Reference.MOD_ID, "IOffHandAttack"), new ICapabilitySerializable() {
+
+            final IOffHandAttack inst = EventHandlers.OFFHAND_CAP.getDefaultInstance();
 
             @Override
             public boolean hasCapability(Capability<?> capability, EnumFacing facing) {
@@ -91,7 +83,7 @@ public class EventHandlers
 
             @Override
             public NBTPrimitive serializeNBT() {
-                return (NBTPrimitive) EventHandlers.OFFHAND_CAP.getStorage().writeNBT(EventHandlers.OFFHAND_CAP, this.inst, null);
+                return (NBTPrimitive)EventHandlers.OFFHAND_CAP.getStorage().writeNBT(EventHandlers.OFFHAND_CAP, this.inst, null);
             }
 
             @Override
@@ -100,9 +92,9 @@ public class EventHandlers
             }
         });
 
-        event.addCapability(new ResourceLocation(Reference.MOD_ID, "ISecondHurtTimer"), new ICapabilitySerializable()
-        {
-            ISecondHurtTimer inst = EventHandlers.SECONDHURTTIMER_CAP.getDefaultInstance();
+        event.addCapability(new ResourceLocation(Reference.MOD_ID, "ISecondHurtTimer"), new ICapabilitySerializable() {
+
+            final ISecondHurtTimer inst = EventHandlers.SECONDHURTTIMER_CAP.getDefaultInstance();
 
             @Override
             public boolean hasCapability(Capability<?> capability, EnumFacing facing) {
@@ -116,7 +108,7 @@ public class EventHandlers
 
             @Override
             public NBTPrimitive serializeNBT() {
-                return (NBTPrimitive) EventHandlers.SECONDHURTTIMER_CAP.getStorage().writeNBT(EventHandlers.SECONDHURTTIMER_CAP, this.inst, null);
+                return (NBTPrimitive)EventHandlers.SECONDHURTTIMER_CAP.getStorage().writeNBT(EventHandlers.SECONDHURTTIMER_CAP, this.inst, null);
             }
 
             @Override

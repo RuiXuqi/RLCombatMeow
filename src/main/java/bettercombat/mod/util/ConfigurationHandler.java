@@ -13,8 +13,8 @@ import java.util.Arrays;
 import java.util.List;
 
 @SuppressWarnings("BooleanMethodIsAlwaysInverted")
-public class ConfigurationHandler
-{
+public class ConfigurationHandler {
+
     public static Configuration config;
 
     private static final int VERSION = 5;
@@ -36,11 +36,6 @@ public class ConfigurationHandler
     public static float distanceToJumpCrit = 2.0F;
 
     public static boolean enableMixinCompatFallback = true;
-
-    //public static boolean enableFuzzyTargetting = true;
-    //public static float fuzzyRadius = 0.2F;
-    //public static boolean enableSweepingTargetting = true;
-    //public static float sweepingRatio = 0.05F;
 
     private static String[] itemClassWhitelist = new String[] {
             "net.minecraft.item.ItemSword",
@@ -66,7 +61,7 @@ public class ConfigurationHandler
     private static Class<?>[] entityBlackArray;
 
     public static void init(File configFile) {
-        if( config == null ) {
+        if(config == null) {
             config = new Configuration(configFile, Integer.toString(VERSION));
             loadConfiguration();
         }
@@ -76,10 +71,11 @@ public class ConfigurationHandler
         String ver = config.getLoadedConfigVersion();
         int loadedVer = 0;
         try {
-            if( ver != null ) {
+            if(ver != null) {
                 loadedVer = Integer.parseInt(ver);
             }
-        } catch( NumberFormatException ignored ) { }
+        }
+        catch(NumberFormatException ignored) { }
 
         randomCrits = config.getBoolean("Random Crits", "general", true, "Melee attacks have now 30% chance to critically strike, critical strikes can no longer be forced by falling");
         weakerOffhand = config.getBoolean("Weaker Left Arm", "general", true, "Attacks with the Off-hand does 50% less damage");
@@ -102,44 +98,41 @@ public class ConfigurationHandler
 
         enableMixinCompatFallback = config.getBoolean("Enable Mixin Compat Fallback", "general", true, "Enables a fallback check if modded attacks bypass BetterCombat's packets to allow for BetterCombat to still process the attack");
 
-        //enableFuzzyTargetting = config.getBoolean("Enable Fuzzy Targetting", "general", true, "Enables fuzzy checks at the end of attack raytrace");
-        //fuzzyRadius = config.getFloat("Fuzzy Radius", "general", 0.2F, 0, 1, "Radius of fuzzy targetting");
-        //enableSweepingTargetting = config.getBoolean("Enable Sweeping Targetting", "general", true, "Enables a ratio-based sweeping raytrace from left-to-right or vice versa based on attacking hand");
-        //sweepingRatio = config.getFloat("Sweep Ratio", "general", 0.05F, 0, 1, "Ratio of sweeping offset to distance");
-
-        if( loadedVer < VERSION ) {
+        if(loadedVer < VERSION) {
             config.getCategory("general").remove("Item Class Blacklist");
             config.getCategory("general").remove("Item Blacklist");
         }
 
-        if( config.hasChanged() ) {
+        if(config.hasChanged()) {
             config.save();
         }
     }
 
     public static void createInstLists() {
         List<Class<?>> classList = new ArrayList<>();
-        for( String className : itemClassWhitelist ) {
+        for(String className : itemClassWhitelist) {
             try {
                 classList.add(Class.forName(className));
-            } catch( ClassNotFoundException ignored ) { }
+            }
+            catch(ClassNotFoundException ignored) { }
         }
         itemClassWhiteArray = classList.toArray(new Class<?>[0]);
 
         classList.clear();
-        for( String className : entityBlacklist ) {
+        for(String className : entityBlacklist) {
             try {
                 classList.add(Class.forName(className));
-            } catch( ClassNotFoundException e ) {
+            }
+            catch(ClassNotFoundException e) {
                 e.printStackTrace();
             }
         }
         entityBlackArray = classList.toArray(new Class<?>[0]);
 
         List<Item> itemList = new ArrayList<>();
-        for( String itemName : itemInstWhitelist ) {
+        for(String itemName : itemInstWhitelist) {
             Item itm = Item.REGISTRY.getObject(new ResourceLocation(itemName));
-            if( itm != null ) {
+            if(itm != null) {
                 itemList.add(itm);
             }
         }
@@ -147,7 +140,7 @@ public class ConfigurationHandler
     }
 
     public static boolean isItemAttackUsable(final Item item) {
-        if( Arrays.stream(itemInstWhiteArray).anyMatch(blItem -> blItem == item) ) {
+        if(Arrays.stream(itemInstWhiteArray).anyMatch(blItem -> blItem == item)) {
             return true;
         }
 
@@ -160,7 +153,7 @@ public class ConfigurationHandler
 
     @SubscribeEvent
     public void onConfigurationChangedEvent(ConfigChangedEvent.OnConfigChangedEvent event) {
-        if( Reference.MOD_ID.equalsIgnoreCase(event.getModID()) ) {
+        if(Reference.MOD_ID.equalsIgnoreCase(event.getModID())) {
             loadConfiguration();
             createInstLists();
         }

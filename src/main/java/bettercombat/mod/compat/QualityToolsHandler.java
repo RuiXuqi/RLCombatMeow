@@ -1,4 +1,4 @@
-package bettercombat.mod.util;
+package bettercombat.mod.compat;
 
 import com.google.common.collect.Multimap;
 import com.tmtravlr.qualitytools.QualityToolsHelper;

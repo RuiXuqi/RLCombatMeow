@@ -8,7 +8,6 @@ public class RLCombatCriticalHitEvent extends CriticalHitEvent {
 
     private final boolean offhand;
 
-
     /**
      * Extend CriticalHitEvent and add offhand boolean for compatibility with things such as enchantments
      */
@@ -17,5 +16,7 @@ public class RLCombatCriticalHitEvent extends CriticalHitEvent {
         this.offhand = offhand;
     }
 
-    public boolean getOffhand() { return this.offhand; }
+    public boolean getOffhand() {
+        return this.offhand;
+    }
 }

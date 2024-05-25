@@ -7,9 +7,8 @@ import net.minecraft.nbt.NBTTagInt;
 import net.minecraft.util.EnumFacing;
 import net.minecraftforge.common.capabilities.Capability;
 
-public class StorageOffHandAttack
-        implements Capability.IStorage<IOffHandAttack>
-{
+public class StorageOffHandAttack implements Capability.IStorage<IOffHandAttack> {
+
     @Override
     public NBTBase writeNBT(Capability<IOffHandAttack> capability, IOffHandAttack instance, EnumFacing side) {
         return new NBTTagInt(instance.getOffhandCooldown());
@@ -17,6 +16,6 @@ public class StorageOffHandAttack
 
     @Override
     public void readNBT(Capability<IOffHandAttack> capability, IOffHandAttack instance, EnumFacing side, NBTBase nbt) {
-        instance.setOffhandCooldown(((NBTPrimitive) nbt).getInt());
+        instance.setOffhandCooldown(((NBTPrimitive)nbt).getInt());
     }
 }

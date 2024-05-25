@@ -1,7 +1,7 @@
 package bettercombat.mod.util;
 
-public class Reference
-{
+public class Reference {
+
   public static final String MOD_ID = "bettercombatmod";
   public static final String MOD_NAME = "RLCombat";
   public static final String VERSION = "2.1.0";

@@ -7,8 +7,8 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
 @Mod.EventBusSubscriber(modid = Reference.MOD_ID)
-public class Sounds
-{
+public class Sounds {
+
     public static final SoundEvent SWORD_SLASH = registerSound("player.swordslash");
     public static final SoundEvent CRITICAL_STRIKE = registerSound("player.criticalstrike");
 

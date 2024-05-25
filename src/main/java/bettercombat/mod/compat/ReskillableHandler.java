@@ -1,4 +1,4 @@
-package bettercombat.mod.util;
+package bettercombat.mod.compat;
 
 import codersafterdark.reskillable.base.ConfigHandler;
 import codersafterdark.reskillable.base.LevelLockHandler;
@@ -18,7 +18,6 @@ public abstract class ReskillableHandler {
             }
             return ConfigHandler.enforceFakePlayers;
         }
-
         return false;
     }
 }

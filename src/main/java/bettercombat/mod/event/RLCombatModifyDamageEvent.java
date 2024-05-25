@@ -36,6 +36,7 @@ public class RLCombatModifyDamageEvent extends PlayerEvent {
     }
 
     public static class Pre extends RLCombatModifyDamageEvent {
+
         /**
          * Modify attack damage before cooldown multiplier and critical multiplier is added to it
          */
@@ -45,12 +46,13 @@ public class RLCombatModifyDamageEvent extends PlayerEvent {
     }
 
     public static class Post extends RLCombatModifyDamageEvent {
+
+        private DamageSource dmgSource;
+
         /**
          * Modify attack damage after cooldown multiplier and critical multiplier is added to it
          * Allow changing the damage source as attacking will happen at this point
          */
-
-        private DamageSource dmgSource;
         public Post(EntityPlayer player, Entity targetEntity, boolean offhand, ItemStack stack, float damage, float cooledStrength, double motionX, double motionY, double motionZ, DamageSource dmgSource) {
             super(player, targetEntity, offhand, stack, damage, cooledStrength, motionX, motionY, motionZ);
             this.dmgSource = dmgSource;

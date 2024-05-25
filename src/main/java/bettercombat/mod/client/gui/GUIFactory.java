@@ -9,12 +9,10 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 
 @SideOnly(Side.CLIENT)
 @SuppressWarnings("unused")
-public class GUIFactory
-    implements IModGuiFactory
-{
+public class GUIFactory implements IModGuiFactory {
+
     @Override
-    public void initialize(Minecraft minecraftInstance) {
-    }
+    public void initialize(Minecraft minecraftInstance) { }
 
     @Override
     public boolean hasConfigGui() {

@@ -22,14 +22,11 @@ public class RLCombatSweepEvent extends PlayerEvent {
 
     /**
      * Posts before sweeping is attempted, allows cancelling sweeping, changing damage modifier, and sweeping size
-     * doSweepIgnoreItemSword = Should sweeping would be attempted regardless of ItemSword
+     * doSweepIgnoreItemSword = Would sweeping be attempted before checking if instanceof ItemSword
      * Modify doSweep to change results, otherwise doSweep = doSweepIgnoreItemSword && stack instanceof ItemSword
-     *
      * sweepModifier = EnchantmentHelper.getSweepingDamageRatio(player)
      * Damage applied to sweep targets = 1.0 + (sweepModifier * baseDamage)
-     *
      * sweepingAABB = bounding box around target to sweep in, already expanded by 1.0x, 0.25y, 1.0z
-     *
      * sweepingDamageSource = what damage source to apply when sweeping, overridable
      */
     public RLCombatSweepEvent(

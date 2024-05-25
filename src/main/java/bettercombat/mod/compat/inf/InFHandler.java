@@ -1,4 +1,4 @@
-package bettercombat.mod.util.inf;
+package bettercombat.mod.compat.inf;
 
 import net.minecraft.entity.Entity;
 import net.minecraftforge.fml.common.Loader;
