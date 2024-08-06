@@ -6,15 +6,13 @@
  *******************************************************************************************************************/
 package bettercombat.mod.util;
 
-import bettercombat.mod.compat.ModLoadedUtil;
-import bettercombat.mod.compat.QualityToolsHandler;
-import bettercombat.mod.compat.ReskillableHandler;
-import bettercombat.mod.compat.SpartanWeaponryHandler;
+import bettercombat.mod.compat.*;
 import bettercombat.mod.event.RLCombatCriticalHitEvent;
 import bettercombat.mod.event.RLCombatModifyDamageEvent;
 import bettercombat.mod.event.RLCombatSweepEvent;
 import bettercombat.mod.handler.EventHandlers;
 import bettercombat.mod.capability.CapabilityOffhandCooldown;
+import bettercombat.mod.handler.SoundHandler;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import meldexun.reachfix.util.ReachFixUtil;
@@ -36,7 +34,6 @@ import net.minecraft.init.SoundEvents;
 import net.minecraft.inventory.EntityEquipmentSlot;
 import net.minecraft.item.ItemAxe;
 import net.minecraft.item.ItemShield;
-import net.minecraft.item.ItemSpade;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.ItemSword;
 import net.minecraft.network.play.server.SPacketEntityVelocity;
@@ -104,12 +101,16 @@ public final class Helpers {
 
     public static float getOffhandDamage(EntityPlayer player) {
         float attack = (float)player.getEntityAttribute(SharedMonsterAttributes.ATTACK_DAMAGE).getAttributeValue();
-        return attack * (ConfigurationHandler.weakerOffhand ? ConfigurationHandler.offHandEfficiency : 1.0F);
+        return attack * (ConfigurationHandler.server.weakerOffhand ? ConfigurationHandler.server.offhandEfficiency : 1.0F);
     }
-
-    public static int getOffhandCooldown(EntityPlayer player) {
+    
+    public static int getCooldownAttributeTimer(EntityPlayer player) {
         float speed = (float)player.getEntityAttribute(SharedMonsterAttributes.ATTACK_SPEED).getAttributeValue();
         return (int) (((1.0F/speed)*20.0F)+0.5F);
+    }
+
+    public static boolean isHandActive(EntityPlayer player, EnumHand hand) {
+        return player.isHandActive() && player.getItemInUseCount() > 0 && player.getActiveHand().equals(hand);
     }
 
     public static void attackTargetEntityItem(EntityPlayer player, Entity targetEntity, boolean offhand, double motionX, double motionY, double motionZ) {
@@ -131,7 +132,7 @@ public final class Helpers {
                     addNewModifiers(player, player.getHeldItemOffhand());
 
                     damage = getOffhandDamage(player);
-                    cooldown = getOffhandCooldown(player);
+                    cooldown = getCooldownAttributeTimer(player);
                     reach = ReachFixUtil.getEntityReach(player, EnumHand.OFF_HAND);
 
                     clearOldModifiers(player, player.getHeldItemOffhand());
@@ -159,9 +160,9 @@ public final class Helpers {
                     cooledStr = player.getCooledAttackStrength(0.5F);
                 }
 
-                //Post event to get any other modifiers before multiply by cooldown required for compat
+                //Post event to get any other modifiers before multiplying by cooldown and adding enchantment damage
                 RLCombatModifyDamageEvent modifyResultPre = new RLCombatModifyDamageEvent.Pre(player, targetEntity, offhand, weapon, damage, cooledStr, motionX, motionY, motionZ);
-                MinecraftForge.EVENT_BUS.post(modifyResultPre);
+                boolean cancelPre = MinecraftForge.EVENT_BUS.post(modifyResultPre);
                 damage += modifyResultPre.getDamageModifier();
 
                 damage *= (0.2F + cooledStr * cooledStr * 0.8F);
@@ -178,13 +179,22 @@ public final class Helpers {
                 else {
                     player.resetCooldown();
                 }
+                
+                //Cancel after cooldowns for consistency, as mainhand cooldown will still get reset from arm swinging handling
+                if(cancelPre) return;
 
                 if(damage > 0.0F || cMod > 0.0F) {
                     boolean isStrong = cooledStr > 0.9F;
                     boolean knockback = false;
                     boolean isCrit;
+                    //Hacky compat for enchantment mods like SME to avoid stacktrace checking
+                    EnchantCompatHandler.knockbackFromOffhand = offhand;
                     int knockbackMod = EnchantmentHelper.getKnockbackModifier(player);
+                    EnchantCompatHandler.knockbackFromOffhand = false;
+                    //Hacky compat for enchantment mods like SME to avoid stacktrace checking
+                    EnchantCompatHandler.fireAspectFromOffhand = offhand;
                     int fireAspect = EnchantmentHelper.getFireAspectModifier(player);
+                    EnchantCompatHandler.fireAspectFromOffhand = false;
 
                     if(player.isSprinting() && isStrong) {
                         player.world.playSound(null, player.posX, player.posY, player.posZ, SoundEvents.ENTITY_PLAYER_ATTACK_KNOCKBACK, player.getSoundCategory(), 1.0F, 1.0F);
@@ -192,10 +202,10 @@ public final class Helpers {
                         knockback = true;
                     }
 
-                    if(ConfigurationHandler.randomCrits) {
-                        isCrit = player.getRNG().nextFloat() < ConfigurationHandler.critChance && !player.isSprinting() && (!ConfigurationHandler.requireEnergyToRandomCrit || isStrong);
+                    if(ConfigurationHandler.server.randomCrits) {
+                        isCrit = player.getRNG().nextFloat() < ConfigurationHandler.server.critChance && !player.isSprinting() && (!ConfigurationHandler.server.requireEnergyToRandomCrit || isStrong);
                         //Allow forced jump crits at close range
-                        if(!isCrit) isCrit = (!ConfigurationHandler.requireEnergyToJumpCrit || isStrong) && player.getDistance(targetEntity) < ConfigurationHandler.distanceToJumpCrit && player.fallDistance > 0.0F && !player.onGround && !player.isOnLadder() &&
+                        if(!isCrit) isCrit = (!ConfigurationHandler.server.requireEnergyToJumpCrit || isStrong) && player.getDistance(targetEntity) < ConfigurationHandler.server.distanceToJumpCrit && player.fallDistance > 0.0F && !player.onGround && !player.isOnLadder() &&
                                 !player.isInWater() && !player.isPotionActive(MobEffects.BLINDNESS) && !player.isRiding() &&
                                 targetEntity instanceof EntityLivingBase && !player.isSprinting();
                     }
@@ -218,10 +228,12 @@ public final class Helpers {
 
                     //Post event to get any other modifiers after multiply by cooldown and crit required for compat
                     RLCombatModifyDamageEvent.Post modifyResultPost = new RLCombatModifyDamageEvent.Post(player, targetEntity, offhand, weapon, damage, cooledStr, motionX, motionY, motionZ, DamageSource.causePlayerDamage(player));
-                    MinecraftForge.EVENT_BUS.post(modifyResultPost);
+                    boolean cancelPost = MinecraftForge.EVENT_BUS.post(modifyResultPost);
                     damage += modifyResultPost.getDamageModifier();
                     DamageSource dmgSource = modifyResultPost.getDamageSource();//Allow for changing the damage source to custom for compat with mods like SpartanWeaponry
 
+                    if(cancelPost) return;
+                    
                     boolean doSweepingIgnoreSword = false;
                     boolean doSweeping = false;
                     double tgtDistDelta = player.distanceWalkedModified - player.prevDistanceWalkedModified;
@@ -246,7 +258,9 @@ public final class Helpers {
                     double tgtMotionY = targetEntity.motionY;
                     double tgtMotionZ = targetEntity.motionZ;
                     boolean attacked;
-
+                    
+                    //Hacky compat for enchantment mods like SME to avoid stacktrace checking
+                    EnchantCompatHandler.lootingFromOffhand = offhand;
                     if(offhand) {
                         Entity targetEntCap = targetEntity;
                         if(targetEntCap instanceof MultiPartEntityPart) targetEntCap = (Entity)(((MultiPartEntityPart)targetEntCap).parent);
@@ -257,6 +271,8 @@ public final class Helpers {
                     else {
                         attacked = targetEntity.attackEntityFrom(dmgSource, damage);
                     }
+                    EnchantCompatHandler.lootingFromOffhand = false;
+                    
                     if(attacked) {
                         if(knockbackMod > 0) {
                             if(targetEntity instanceof EntityLivingBase) {
@@ -267,7 +283,7 @@ public final class Helpers {
                             }
                             player.motionX *= 0.6D;
                             player.motionZ *= 0.6D;
-                            if(!ConfigurationHandler.moreSprint) {
+                            if(!ConfigurationHandler.server.dontInterruptSprint) {
                                 player.setSprinting(false);
                             }
                         }
@@ -280,7 +296,9 @@ public final class Helpers {
                             float sweepingDamage = 1.0F + (sweepResult.getSweepModifier() * damage);
                             AxisAlignedBB sweepingAABB = sweepResult.getSweepingAABB();
                             DamageSource sweepingDamageSource = sweepResult.getSweepingDamageSource();
-
+                            
+                            //Hacky compat for enchantment mods like SME to avoid stacktrace checking
+                            EnchantCompatHandler.lootingFromOffhand = offhand;
                             for(EntityLivingBase living : player.world.getEntitiesWithinAABB(EntityLivingBase.class, sweepingAABB)) {
                                 if(living != player && living != targetEntity && !player.isOnSameTeam(living) && player.getDistanceSq(living) < (reach * reach)) {
                                     living.knockBack(player, 0.4F, MathHelper.sin(player.rotationYaw * 0.017453292F), -MathHelper.cos(player.rotationYaw * 0.017453292F));
@@ -293,6 +311,7 @@ public final class Helpers {
                                     }
                                 }
                             }
+                            EnchantCompatHandler.lootingFromOffhand = false;
                             player.world.playSound(null, player.posX, player.posY, player.posZ, SoundEvents.ENTITY_PLAYER_ATTACK_SWEEP, player.getSoundCategory(), 1.0F, 1.0F);
                             player.spawnSweepParticles();
                         }
@@ -306,24 +325,18 @@ public final class Helpers {
                         }
 
                         if(isCrit) {
-                            if(offhand) {
+                            if(weapon.isEmpty() || !ConfigurationHandler.server.additionalCritSound) {
                                 player.world.playSound(null, player.posX, player.posY, player.posZ, SoundEvents.ENTITY_PLAYER_ATTACK_CRIT, player.getSoundCategory(), 1.0F, 1.0F);
                             }
                             player.onCriticalHit(targetEntity);
                         }
 
-                        boolean playSound = true;
                         if(!weapon.isEmpty()) {
-                            if(weapon.getItem() instanceof ItemSpade) {
-                                playSound = false;
+                            if(ConfigurationHandler.server.additionalHitSound && (!ConfigurationHandler.server.additionalCritSound || !isCrit)) {
+                                player.world.playSound(null, player.posX, player.posY, player.posZ, SoundHandler.SWORD_SLASH, player.getSoundCategory(), 1.0F, 1.0F);
                             }
-                            if(playSound) {
-                                if(ConfigurationHandler.hitSound && (!ConfigurationHandler.critSound || !isCrit)) {
-                                    player.world.playSound(null, player.posX, player.posY, player.posZ, Sounds.SWORD_SLASH, player.getSoundCategory(), 1.0F, 1.0F);
-                                }
-                                if(ConfigurationHandler.critSound && isCrit) {
-                                    player.world.playSound(null, player.posX, player.posY, player.posZ, Sounds.CRITICAL_STRIKE, player.getSoundCategory(), 1.0F, 1.0F);
-                                }
+                            if(ConfigurationHandler.server.additionalCritSound && isCrit) {
+                                player.world.playSound(null, player.posX, player.posY, player.posZ, SoundHandler.CRITICAL_STRIKE, player.getSoundCategory(), 1.0F, 1.0F);
                             }
                         }
 
@@ -344,7 +357,9 @@ public final class Helpers {
                             EntityPlayer entityplayer = (EntityPlayer)targetEntity;
                             ItemStack activeItem = entityplayer.isHandActive() ? entityplayer.getActiveItemStack() : ItemStack.EMPTY;
                             if(weapon.getItem() instanceof ItemAxe && activeItem.getItem() instanceof ItemShield) {
+                                EnchantCompatHandler.efficiencyFromOffhand = offhand;
                                 float efficiency = 0.25F + EnchantmentHelper.getEfficiencyModifier(player) * 0.05F;
+                                EnchantCompatHandler.efficiencyFromOffhand = false;
                                 if(knockback) {
                                     efficiency += 0.75F;
                                 }
@@ -359,10 +374,16 @@ public final class Helpers {
                         player.setLastAttackedEntity(targetEntity);
 
                         if(targetEntity instanceof EntityLivingBase) {
+                            //Hacky compat for enchantment mods like SME to avoid stacktrace checking
+                            EnchantCompatHandler.thornsFromOffhand = offhand;
                             EnchantmentHelper.applyThornEnchantments((EntityLivingBase)targetEntity, player);
+                            EnchantCompatHandler.thornsFromOffhand = false;
                         }
-
+                        
+                        //Hacky compat for enchantment mods like SME to avoid stacktrace checking
+                        EnchantCompatHandler.arthropodFromOffhand = offhand;
                         EnchantmentHelper.applyArthropodEnchantments(player, targetEntity);
+                        EnchantCompatHandler.arthropodFromOffhand = false;
 
                         Entity entity = targetEntity;
 

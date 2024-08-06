@@ -11,7 +11,7 @@ import java.util.Map;
 public class BetterCombatPlugin implements IFMLLoadingPlugin {
 
     public BetterCombatPlugin() {
-        FermiumRegistryAPI.enqueueMixin(false, "mixins.bettercombat.json");
+        FermiumRegistryAPI.enqueueMixin(false, "mixins.bettercombatmod.json");
     }
 
     @Override

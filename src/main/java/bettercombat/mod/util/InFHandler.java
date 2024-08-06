@@ -1,5 +1,7 @@
-package bettercombat.mod.compat.inf;
+package bettercombat.mod.util;
 
+import bettercombat.mod.compat.inf.InFLightningWrapper;
+import bettercombat.mod.compat.inf.InFMainWrapper;
 import net.minecraft.entity.Entity;
 import net.minecraftforge.fml.common.Loader;
 

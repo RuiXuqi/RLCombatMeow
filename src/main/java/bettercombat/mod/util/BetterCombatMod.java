@@ -13,7 +13,6 @@ import org.apache.logging.log4j.Logger;
 @Mod(modid=Reference.MOD_ID,
         name=Reference.MOD_NAME,
         version=Reference.VERSION,
-        guiFactory="bettercombat.mod.client.gui.GUIFactory",
         acceptedMinecraftVersions="[1.12.2]",
         dependencies = "required-after:reachfix;" +
                 "required-after:fermiumbooter;" +
@@ -33,13 +32,11 @@ public class BetterCombatMod {
     public void preInit(FMLPreInitializationEvent event) {
         MinecraftForge.EVENT_BUS.register(new EventHandlers());
         proxy.preInit(event);
-        ConfigurationHandler.init(event.getSuggestedConfigurationFile());
-        MinecraftForge.EVENT_BUS.register(new ConfigurationHandler());
     }
 
     @Mod.EventHandler
     public void init(FMLInitializationEvent event) {
         CapabilityOffhandCooldown.register();
-        ConfigurationHandler.createInstLists();
+        proxy.initConfigCache();
     }
 }

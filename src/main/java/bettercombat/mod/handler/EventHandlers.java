@@ -34,7 +34,7 @@ public class EventHandlers {
     public void onAttack(AttackEntityEvent event) {
         if(event.getTarget() == null) return;
         if(event.getTarget().hurtResistantTime <= 10 ) {
-            if(ConfigurationHandler.moreSweep) {
+            if(ConfigurationHandler.client.moreSweepParticles) {
                 BetterCombatMod.proxy.spawnSweep((EntityPlayer)event.getEntityLiving());
             }
         }

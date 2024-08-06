@@ -1,161 +1,409 @@
 package bettercombat.mod.util;
 
+import bettercombat.mod.client.animation.util.AnimationEnum;
+import bettercombat.mod.client.animation.util.CustomWeapon;
 import net.minecraft.entity.Entity;
 import net.minecraft.item.Item;
 import net.minecraft.util.ResourceLocation;
-import net.minecraftforge.common.config.Configuration;
+import net.minecraftforge.common.config.Config;
+import net.minecraftforge.common.config.ConfigManager;
 import net.minecraftforge.fml.client.event.ConfigChangedEvent;
+import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import org.apache.logging.log4j.Level;
 
-import java.io.File;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
-@SuppressWarnings("BooleanMethodIsAlwaysInverted")
+@Config(modid = Reference.MOD_ID)
 public class ConfigurationHandler {
 
-    public static Configuration config;
+    @Config.Comment("Server-Side Config")
+    @Config.Name("Server-Side Config")
+    public static final ServerConfig server = new ServerConfig();
 
-    private static final int VERSION = 5;
+    @Config.Comment("Client-Side Config")
+    @Config.Name("Client-Side Config")
+    public static final ClientConfig client = new ClientConfig();
 
-    public static boolean requireFullEnergy = false;
-    public static boolean hitSound = true;
-    public static boolean critSound = true;
-    public static boolean moreSprint = false;
-    public static boolean moreSweep = false;
-    public static boolean randomCrits = true;
-    public static boolean weakerOffhand = true;
-    public static boolean enableOffHandAttack = true;
-    public static float offHandEfficiency = 0.5F;
-    public static float critChance = 0.2F;
+    public static class ServerConfig {
+        
+        @Config.Comment("Allows you to attack with your offhand")
+        @Config.Name("Enable Offhand Attack")
+        public boolean enableOffhandAttack = true;
+        
+        @Config.Comment("Attacking with the offhand does less damage")
+        @Config.Name("Weaker Offhand")
+        public boolean weakerOffhand = true;
+        
+        @Config.Comment("The efficiency of offhand attacks if Weaker Offhand is enabled")
+        @Config.Name("Offhand Efficiency")
+        @Config.RangeDouble(min=0.0F, max=1.0F)
+        public float offhandEfficiency = 0.5F;
 
-    public static boolean requireEnergyToRandomCrit = true;
+        @Config.Comment("Requires your energy to be full in order to attack")
+        @Config.Name("Attack Requires Full Energy")
+        public boolean requireFullEnergy = false;
+        
+        @Config.Comment("Requires your energy to be full in order to randomly crit")
+        @Config.Name("Random Crit Requires Full Energy")
+        public boolean requireEnergyToRandomCrit = true;
+        
+        @Config.Comment("Requires your energy to be full in order to jump crit")
+        @Config.Name("Jump Crit Requires Full Energy")
+        public boolean requireEnergyToJumpCrit = true;
+        
+        @Config.Comment("Allows crits to happen based on a random chance")
+        @Config.Name("Random Crit")
+        public boolean randomCrits = true;
+        
+        @Config.Comment("Chance of a crit if Random Crit is enabled")
+        @Config.Name("Random Crit Chance")
+        @Config.RangeDouble(min=0.0F, max=1.0F)
+        public float critChance = 0.2F;
+        
+        @Config.Comment("Maximum distance from a target to allow jump crits")
+        @Config.Name("Jump Crit Max Distance")
+        @Config.RangeDouble(min=0.0F, max=10.0F)
+        public float distanceToJumpCrit = 2.0F;
 
-    public static boolean requireEnergyToJumpCrit = true;
-    public static float distanceToJumpCrit = 2.0F;
+        @Config.Comment("Attacking an enemy will not interrupt your sprint")
+        @Config.Name("Attack Does Not Interrupt Sprint")
+        public boolean dontInterruptSprint = false;
+        
+        @Config.Comment("If RLCombat should attempt to swing through blocks that have no collision when attacking enemies")
+        @Config.Name("Swing Through Passable Blocks")
+        public boolean swingThroughPassableBlocks = true;
 
-    public static boolean enableMixinCompatFallback = true;
+        @Config.Comment("Add an additional sound when striking a target")
+        @Config.Name("Additional Hit Sound")
+        public boolean additionalHitSound = true;
 
-    private static String[] itemClassWhitelist = new String[] {
-            "net.minecraft.item.ItemSword",
-            "net.minecraft.item.ItemAxe",
-            "net.minecraft.item.ItemSpade",
-            "net.minecraft.item.ItemPickaxe",
-            "net.minecraft.item.ItemHoe"
-    };
-    private static String[] itemInstWhitelist = new String[] {};
-    private static String[] entityBlacklist = new String[] {
-            "net.minecraft.entity.passive.EntityHorse",
-            "net.minecraft.entity.item.EntityArmorStand",
-            "net.minecraft.entity.passive.EntityVillager",
-            "net.minecraft.entity.item.EntityItemFrame"
-    };
+        @Config.Comment("Add an additional sound when critical striking a target")
+        @Config.Name("Additional Crit Sound")
+        public boolean additionalCritSound = true;
 
-    private static final String[] ICW_DEF = Arrays.copyOf(itemClassWhitelist, itemClassWhitelist.length);
-    private static final String[] IIW_DEF = Arrays.copyOf(itemInstWhitelist, itemInstWhitelist.length);
-    private static final String[] EB_DEF = Arrays.copyOf(entityBlacklist, entityBlacklist.length);
+        @Config.Comment("Whitelisted item classes used for attacking from offhand")
+        @Config.Name("Offhand Item Class Whitelist")
+        public String[] offhandItemClassWhitelist = new String[] {
+                "net.minecraft.item.ItemSword",
+                "net.minecraft.item.ItemAxe",
+                "net.minecraft.item.ItemSpade",
+                "net.minecraft.item.ItemPickaxe",
+                "net.minecraft.item.ItemHoe",
+                "com.mujmajnkraft.bettersurvival.items.ItemBattleAxe",
+                "com.mujmajnkraft.bettersurvival.items.ItemDagger",
+                "com.mujmajnkraft.bettersurvival.items.ItemHammer"
+        };
+
+        @Config.Comment("Whitelisted item ids in the format \"domain:itemname\" used for attacking from offhand")
+        @Config.Name("Offhand Item ID Whitelist")
+        public String[] offhandItemIDWhitelist = new String[] {
+        };
+        
+        @Config.Comment("Blacklisted item ids in the format \"domain:itemname\" used for attacking from offhand")
+        @Config.Name("Offhand Item ID Blacklist")
+        public String[] offhandItemIDBlacklist = new String[] {
+        };
+
+        @Config.Comment("Blacklisted entity classes for attacking with offhand, you will not be able to attack any entity with offhand that extends these classes")
+        @Config.Name("Entity Offhand Blacklist")
+        public String[] entityBlacklist = new String[] {
+                "net.minecraft.entity.passive.EntityHorse",
+                "net.minecraft.entity.item.EntityArmorStand",
+                "net.minecraft.entity.passive.EntityVillager",
+                "net.minecraft.entity.item.EntityItemFrame"
+        };
+        
+        @Config.Comment("Enables a fallback check if modded attacks bypass RLCombats's packets")
+        @Config.Name("Enable Mixin Compat Fallback")
+        public boolean enableMixinCompatFallback = true;
+        
+        @Config.Comment("Should warnings from parsing config entry lists be logged")
+        @Config.Name("Log Config List Warnings")
+        public boolean logConfigListWarnings = true;
+    }
+
+    public static class ClientConfig {
+        
+        @Config.Comment("If RLCombat should display custom weapon animations while swinging (Credit to and modified from ImmersiveCombat)")
+        @Config.Name("Custom Weapon Attack Animations")
+        public boolean customWeaponAttackAnimations = true;
+        
+        @Config.Comment("If RLCombat should also display custom weapon animations while mining (Credit to and modified from ImmersiveCombat)")
+        @Config.Name("Custom Weapon Mining Animations")
+        public boolean customWeaponMiningAnimations = true;
+        
+        @Config.Comment("If RLCombat should play custom weapon sounds for swinging (Credit to and modified from ImmersiveCombat)")
+        @Config.Name("Custom Weapon Swing Sounds")
+        public boolean customWeaponSwingSounds = true;
+        
+        @Config.Comment("If RLCombat should play custom weapon sounds for equipping (Credit to and modified from ImmersiveCombat)")
+        @Config.Name("Custom Weapon Equip Sounds")
+        public boolean customWeaponEquipSounds = true;
+        
+        @Config.Comment("If RLCombat should play custom weapon sounds for sheathing (Credit to and modified from ImmersiveCombat)")
+        @Config.Name("Custom Weapon Sheathe Sounds")
+        public boolean customWeaponSheatheSounds = true;
+        
+        @Config.Comment("If Custom Weapon Swing Sounds is enabled, should swings with undefined items/empty hands also make a sound")
+        @Config.Name("Custom Punch Swing Sounds")
+        public boolean customPunchSwingSounds = true;
+
+        @Config.Comment("If all attacks should spawn the sweep particles")
+        @Config.Name("More Sweep Particles")
+        public boolean moreSweepParticles = false;
+        
+        @Config.Comment("If the vanilla attack ready icon should be rendered when both hands are fully cooled down and an entity is pointed at")
+        @Config.Name("Render Attack Ready Icon")
+        public boolean renderAttackReadyIcon = true;
+        
+        @Config.Comment("How fast held items move during the breathing animation")
+        @Config.Name("Breathing Animation Speed")
+        @Config.RangeDouble(min = 0.0F)
+        public float breathingAnimationSpeed = 0.08F;
+        
+        @Config.Comment("How far held items move during the breathing animation")
+        @Config.Name("Breathing Animation Intensity")
+        @Config.RangeDouble(min = 0.0F)
+        public float breathingAnimationIntensity = 0.02F;
+        
+        @Config.Comment("The distance under which the too close animation will play")
+        @Config.Name("Too Close Animation Distance")
+        @Config.RangeDouble(min = 0.2F, max = 2.0F)
+        public float tooCloseAnimationDistance = 0.7F;
+        
+        @Config.Comment("How far held items move during the too close animation")
+        @Config.Name("Too Close Animation Intensity")
+        @Config.RangeDouble(min = 0.0F)
+        public float tooCloseAnimationIntensity = 0.4F;
+        
+        @Config.Comment("If the too close animation should play when too close to entities")
+        @Config.Name("Too Close Animation Entities")
+        public boolean tooCloseAnimationEntities = true;
+        
+        @Config.Comment("If the too close animation should play when too close to blocks")
+        @Config.Name("Too Close Animation Blocks")
+        public boolean tooCloseAnimationBlocks = true;
+        
+        @Config.Comment("If the breathing and too close animations should play for all items or only defined custom weapons")
+        @Config.Name("Breathing/Too Close Animation on All Items")
+        public boolean breathingTooCloseAnimationAllItems = true;
+        
+        @Config.Comment("If weapons should tilt forward when the player sprints")
+        @Config.Name("Sprinting Weapon Tilt Animation")
+        public boolean sprintingWeaponTilt = true;
+
+        @Config.Comment("How much your camera pitch moves when swinging a weapon")
+        @Config.Name("Swing Animation Camera Pitch")
+        @Config.RangeDouble(min = 0.0F)
+        public float cameraPitchSwing = 0.09F;
+
+        @Config.Comment("How much your camera yaw moves when swinging a weapon")
+        @Config.Name("Swing Animation Camera Yaw")
+        @Config.RangeDouble(min = 0.0F)
+        public float cameraYawSwing = 0.18F;
+
+        @Config.Comment(
+                "Item classes with custom weapon entries to be used for animations and sounds" + "\n" +
+                "Format: ItemClass, AttackAnimation, MiningAnimation, SoundType, HandType, Priority" + "\n" +
+                " " + "\n" +
+                "ItemClass: The class or parent class of the item you want to define" + "\n" +
+                "AttackAnimation: The animation to be used during attack swing" + "\n" +
+                "MiningAnimation: The animation to be used during mining swing" + "\n" +
+                "SoundType: The sound type to be used to determine what sounds are played" + "\n" +
+                "HandType: The hand type to be used to also determine what sounds are played" + "\n" +
+                "Priority: The class priority, for if an item is an instance of multiple defined classes" + "\n" +
+                " " + "\n" +
+                "Valid Animations: SWEEP_COMBO, SWEEP_1, SWEEP_2, CHOP, DIG, STAB, PUNCH" + "\n" +
+                "Valid SoundTypes: BLADE, AXE, BLUNT, DEFAULT" + "\n" +
+                "Valid HandTypes: ONEHAND, TWOHAND" + "\n"
+        )
+        @Config.Name("Item Class Custom Weapon Entries")
+        public String[] weaponClassCustomWeapons = new String[] {
+                "net.minecraft.item.ItemSword, SWEEP_COMBO, PUNCH, BLADE, ONEHAND, 1",
+                "net.minecraft.item.ItemAxe, CHOP, CHOP, AXE, ONEHAND, 1",
+                "net.minecraft.item.ItemSpade, CHOP, DIG, AXE, ONEHAND, 1",
+                "net.minecraft.item.ItemPickaxe, CHOP, PUNCH, AXE, ONEHAND, 1",
+                "net.minecraft.item.ItemHoe, CHOP, PUNCH, AXE, ONEHAND, 1"
+        };
+
+        @Config.Comment("Item ids in the format \"domain:itemname\" with custom weapon entries to be used for animations and sounds" + "\n" +
+                "(Takes priority over Item Class Entries)" + "\n" +
+                "Format: ItemID, AttackAnimation, MiningAnimation, SoundType, HandType" + "\n" +
+                " " + "\n" +
+                "ItemClass: The class or parent class of the item you want to define" + "\n" +
+                "AttackAnimation: The animation to be used during attack swing" + "\n" +
+                "MiningAnimation: The animation to be used during mining swing" + "\n" +
+                "SoundType: The sound type to be used to determine what sounds are played" + "\n" +
+                "HandType: The hand type to be used to also determine what sounds are played" + "\n" +
+                " " + "\n" +
+                "Valid Animations: SWEEP_COMBO, SWEEP_1, SWEEP_2, CHOP, DIG, STAB, PUNCH" + "\n" +
+                "Valid SoundTypes: BLADE, AXE, BLUNT, DEFAULT" + "\n" +
+                "Valid HandTypes: ONEHAND, TWOHAND" + "\n")
+        @Config.Name("Item ID Custom Weapon Entries")
+        public String[] weaponIDCustomWeapons = new String[] {
+        };
+        
+        @Config.Comment("Multiplier to the volume for custom weapon swing sounds")
+        @Config.Name("Custom Weapon Swing Volume Multiplier")
+        public float weaponSwingVolumeMult = 1.0F;
+        
+        @Config.Comment("Multiplier to the volume for custom weapon equip and sheathe sounds")
+        @Config.Name("Custom Weapon Equip/Sheathe Volume Multiplier")
+        public float weaponEquipSheatheVolumeMult = 1.0F;
+        
+        @Config.Comment("List of words or item names to be compared against to give items non-metallic sounds when equipped/sheathed/swung")
+        @Config.Name("Non-Metallic Sound Word List")
+        public String[] nonMetallicSoundWordList = {"flint", "wood", "stone"};
+    }
 
     private static Class<?>[] itemClassWhiteArray;
     private static Item[] itemInstWhiteArray;
+    private static Item[] itemInstBlackArray;
     private static Class<?>[] entityBlackArray;
 
-    public static void init(File configFile) {
-        if(config == null) {
-            config = new Configuration(configFile, Integer.toString(VERSION));
-            loadConfiguration();
-        }
-    }
-
-    private static void loadConfiguration() {
-        String ver = config.getLoadedConfigVersion();
-        int loadedVer = 0;
-        try {
-            if(ver != null) {
-                loadedVer = Integer.parseInt(ver);
-            }
-        }
-        catch(NumberFormatException ignored) { }
-
-        randomCrits = config.getBoolean("Random Crits", "general", true, "Melee attacks have now 30% chance to critically strike, critical strikes can no longer be forced by falling");
-        weakerOffhand = config.getBoolean("Weaker Left Arm", "general", true, "Attacks with the Off-hand does 50% less damage");
-        requireFullEnergy = config.getBoolean("Attacks require full energy", "general", false, "You may only attack if your energy is full");
-        moreSprint = config.getBoolean("Attack and Sprint", "general", false, "Attacking an enemy while sprinting will no longer interrupt your sprint");
-        moreSweep = config.getBoolean("More swipe animation", "general", false, "Every items can spawn the swipe animation");
-        hitSound = config.getBoolean("Additional hit sound", "general", true, "Add an additional sound when striking a target");
-        critSound = config.getBoolean("Additional crit sound", "general", true, "Add an additional sound when a critical strike happens");
-        itemClassWhitelist = config.getStringList("Item Class Whitelist", "general", ICW_DEF, "Whitelisted item classes for attacking.");
-        itemInstWhitelist = config.getStringList("Item Whitelist", "general", IIW_DEF, "Whitelisted items in the format \"domain:itemname\" for attacking.");
-        enableOffHandAttack = config.getBoolean("Enable Offhand Attacks", "general", true, "Enables the capability to attack with your off-hand");
-        offHandEfficiency = config.getFloat("Offhand Efficiency", "general", 0.5F, 0.0F, 1.0F, "The efficiency of an attack with offhanded weapon in percent (attack damage * efficiency)");
-        critChance = config.getFloat("Random Crit Chance", "general", 0.2F, 0.0F, 1.0F, "How likely it is to land a critical hit in percent");
-        entityBlacklist = config.getStringList("Entity Blacklist", "general", EB_DEF, "Blacklisted entity classes for attacking. You will not be able to attack any entity that extends this class! Please note that entities extending IEntityOwnable are by default blacklisted, when the entity is owned by the attacker.");
-
-        requireEnergyToRandomCrit = config.getBoolean("Require Full Energy to Random Crit", "general", true, "Whether or not full/nearly full energy should be required to randomly crit");
-
-        requireEnergyToJumpCrit = config.getBoolean("Require Full Energy to Jump Crit", "general", true, "Whether or not full/nearly full energy should be required to jump crit");
-        distanceToJumpCrit = config.getFloat("Maximum Distance to Jump Crit", "general", 2.0F, 0.0F, 10.0F, "Maximum distance from a target to allow jump crits.");
-
-        enableMixinCompatFallback = config.getBoolean("Enable Mixin Compat Fallback", "general", true, "Enables a fallback check if modded attacks bypass BetterCombat's packets to allow for BetterCombat to still process the attack");
-
-        if(loadedVer < VERSION) {
-            config.getCategory("general").remove("Item Class Blacklist");
-            config.getCategory("general").remove("Item Blacklist");
-        }
-
-        if(config.hasChanged()) {
-            config.save();
-        }
-    }
-
-    public static void createInstLists() {
+    public static void initItemListCache() {
+        itemClassWhiteArray = null;
         List<Class<?>> classList = new ArrayList<>();
-        for(String className : itemClassWhitelist) {
+        for(String className : server.offhandItemClassWhitelist) {
             try {
-                classList.add(Class.forName(className));
+                classList.add(Class.forName(className.trim()));
             }
-            catch(ClassNotFoundException ignored) { }
+            catch(ClassNotFoundException ex) {
+                if(server.logConfigListWarnings) BetterCombatMod.LOG.log(Level.WARN, "Item Class not found for entry: " + className + ", ignoring");
+            }
         }
         itemClassWhiteArray = classList.toArray(new Class<?>[0]);
 
-        classList.clear();
-        for(String className : entityBlacklist) {
-            try {
-                classList.add(Class.forName(className));
-            }
-            catch(ClassNotFoundException e) {
-                e.printStackTrace();
-            }
-        }
-        entityBlackArray = classList.toArray(new Class<?>[0]);
-
+        itemInstWhiteArray = null;
         List<Item> itemList = new ArrayList<>();
-        for(String itemName : itemInstWhitelist) {
-            Item itm = Item.REGISTRY.getObject(new ResourceLocation(itemName));
-            if(itm != null) {
-                itemList.add(itm);
+        for(String itemName : server.offhandItemIDWhitelist) {
+            Item itm = Item.REGISTRY.getObject(new ResourceLocation(itemName.trim()));
+            if(itm != null) itemList.add(itm);
+            else {
+                if(server.logConfigListWarnings) BetterCombatMod.LOG.log(Level.WARN, "Item ID not found for entry: " + itemName + ", ignoring");
             }
         }
         itemInstWhiteArray = itemList.toArray(new Item[0]);
+        
+        itemInstBlackArray = null;
+        List<Item> itemList1 = new ArrayList<>();
+        for(String itemName : server.offhandItemIDBlacklist) {
+            Item itm = Item.REGISTRY.getObject(new ResourceLocation(itemName.trim()));
+            if(itm != null) itemList1.add(itm);
+            else {
+                if(server.logConfigListWarnings) BetterCombatMod.LOG.log(Level.WARN, "Item ID not found for entry: " + itemName + ", ignoring");
+            }
+        }
+        itemInstBlackArray = itemList1.toArray(new Item[0]);
     }
 
-    public static boolean isItemAttackUsable(final Item item) {
-        if(Arrays.stream(itemInstWhiteArray).anyMatch(blItem -> blItem == item)) {
-            return true;
+    public static void initEntityListCache() {
+        entityBlackArray = null;
+        List<Class<?>> classList = new ArrayList<>();
+        for(String className : server.entityBlacklist) {
+            try {
+                classList.add(Class.forName(className.trim()));
+            }
+            catch(ClassNotFoundException ex) {
+                if(server.logConfigListWarnings) BetterCombatMod.LOG.log(Level.WARN, "Entity Class not found for entry: " + className + ", ignoring");
+            }
+        }
+        entityBlackArray = classList.toArray(new Class<?>[0]);
+    }
+
+    public static boolean isItemAttackUsableOffhand(final Item item) {
+        for(Item blItem : itemInstBlackArray) {
+            if(blItem == item) return false;
+        }
+        for(Item wlItem : itemInstWhiteArray) {
+            if(wlItem == item) return true;
+        }
+        for(Class<?> clazz : itemClassWhiteArray) {
+            if(clazz.isInstance(item)) return true;
+        }
+        return false;
+    }
+
+    public static boolean isEntityAttackableOffhand(final Entity entity) {
+        for(Class<?> clazz : entityBlackArray) {
+            if(clazz.isInstance(entity)) return false;
+        }
+        return true;
+    }
+
+    private static Map<Class<?>, CustomWeapon> weaponClassMap;
+    private static Map<Item, CustomWeapon> weaponInstMap;
+
+    public static void initRenderCache() {
+        weaponClassMap = new HashMap<>();
+        for(String classEntry : client.weaponClassCustomWeapons) {
+            try {
+                String[] array = classEntry.split(",");
+                Class<?> clazz = Class.forName(array[0].trim());
+                CustomWeapon newWeapon = new CustomWeapon(
+                        AnimationEnum.valueOf(array[1].trim()),
+                        AnimationEnum.valueOf(array[2].trim()),
+                        CustomWeapon.SoundType.valueOf(array[3].trim()),
+                        CustomWeapon.WeaponProperty.valueOf(array[4].trim()),
+                        Integer.parseInt(array[5].trim()));
+                weaponClassMap.put(clazz, newWeapon);
+            }
+            catch(ClassNotFoundException ex) {
+                if(server.logConfigListWarnings) BetterCombatMod.LOG.log(Level.WARN, "Weapon Class not found for entry: " + classEntry + ", ignoring");
+            }
+            catch(Exception ex) {
+                if(server.logConfigListWarnings) BetterCombatMod.LOG.log(Level.WARN, "Weapon Class Entry failed to parse entry: " + classEntry + ", exception: " + ex.getMessage() + ", ignoring");
+            }
         }
 
-        return Arrays.stream(itemClassWhiteArray).anyMatch(wlClass -> wlClass.isInstance(item));
+        weaponInstMap = new HashMap<>();
+        for(String itemEntry : client.weaponIDCustomWeapons) {
+            try {
+                String[] array = itemEntry.split(",");
+                Item item = Item.REGISTRY.getObject(new ResourceLocation(array[0].trim()));
+                CustomWeapon newWeapon = new CustomWeapon(
+                        AnimationEnum.valueOf(array[1].trim()),
+                        AnimationEnum.valueOf(array[2].trim()),
+                        CustomWeapon.SoundType.valueOf(array[3].trim()),
+                        CustomWeapon.WeaponProperty.valueOf(array[4].trim()),
+                        1);
+                if(item != null) weaponInstMap.put(item, newWeapon);
+                else {
+                    if(server.logConfigListWarnings) BetterCombatMod.LOG.log(Level.WARN, "Weapon ID not found for entry: " + itemEntry + ", ignoring");
+                }
+            }
+            catch(Exception ex) {
+                if(server.logConfigListWarnings) BetterCombatMod.LOG.log(Level.WARN, "Weapon ID Entry failed to parse entry: " + itemEntry + ", exception: " + ex.getMessage() + ", ignoring");
+            }
+        }
     }
 
-    public static boolean isEntityAttackable(final Entity entity) {
-        return Arrays.stream(entityBlackArray).noneMatch(eClass -> eClass.isInstance(entity));
+    public static CustomWeapon getCustomWeapon(Item item) {
+        for(Item mapInst : weaponInstMap.keySet()) {
+            if(mapInst == item) return weaponInstMap.get(mapInst);
+        }
+        CustomWeapon weapon = null;
+        for(Class<?> clazz : weaponClassMap.keySet()) {
+            if(clazz.isInstance(item)) {
+                CustomWeapon weapon1 = weaponClassMap.get(clazz);
+                if(weapon == null || weapon1.priority > weapon.priority) weapon = weapon1;
+            }
+        }
+        return weapon;
     }
 
-    @SubscribeEvent
-    public void onConfigurationChangedEvent(ConfigChangedEvent.OnConfigChangedEvent event) {
-        if(Reference.MOD_ID.equalsIgnoreCase(event.getModID())) {
-            loadConfiguration();
-            createInstLists();
+    @Mod.EventBusSubscriber(modid = Reference.MOD_ID)
+    private static class EventHandler {
+        @SubscribeEvent
+        public static void onConfigChanged(ConfigChangedEvent.OnConfigChangedEvent event) {
+            if(event.getModID().equals(Reference.MOD_ID)) {
+                ConfigManager.sync(Reference.MOD_ID, Config.Type.INSTANCE);
+                BetterCombatMod.proxy.initConfigCache();
+            }
         }
     }
 }
