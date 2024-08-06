@@ -6,6 +6,7 @@
  *******************************************************************************************************************/
 package bettercombat.mod.util;
 
+import bettercombat.mod.capability.CapabilityOffhandHurtResistance;
 import bettercombat.mod.compat.*;
 import bettercombat.mod.event.RLCombatCriticalHitEvent;
 import bettercombat.mod.event.RLCombatModifyDamageEvent;
@@ -13,6 +14,7 @@ import bettercombat.mod.event.RLCombatSweepEvent;
 import bettercombat.mod.handler.EventHandlers;
 import bettercombat.mod.capability.CapabilityOffhandCooldown;
 import bettercombat.mod.handler.SoundHandler;
+import bettercombat.mod.mixin.IEntityLivingBaseMixin;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import meldexun.reachfix.util.ReachFixUtil;
@@ -48,6 +50,7 @@ import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.ForgeEventFactory;
 import net.minecraftforge.event.entity.player.AttackEntityEvent;
 import net.minecraftforge.fml.common.eventhandler.Event;
+import org.apache.logging.log4j.Level;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -153,7 +156,7 @@ public final class Helpers {
 
                 float cooledStr;
                 if(offhand) {
-                    if(cooldown > 0) cooledStr = 1.0F - Helpers.execNullable(player.getCapability(EventHandlers.TUTO_CAP, null), CapabilityOffhandCooldown::getOffhandCooldown, 0) / (float) cooldown;
+                    if(cooldown > 0) cooledStr = 1.0F - Helpers.execNullable(player.getCapability(EventHandlers.OFFHAND_COOLDOWN, null), CapabilityOffhandCooldown::getOffhandCooldown, 0) / (float) cooldown;
                     else cooledStr = 1.0F;
                 }
                 else {
@@ -169,7 +172,7 @@ public final class Helpers {
                 cMod *= cooledStr;
 
                 if(offhand) {
-                    CapabilityOffhandCooldown coh = player.getCapability(EventHandlers.TUTO_CAP, null);
+                    CapabilityOffhandCooldown coh = player.getCapability(EventHandlers.OFFHAND_COOLDOWN, null);
                     if(coh != null) {
                         coh.setOffhandCooldown(cooldown);
                         coh.setOffhandBeginningCooldown(cooldown);
@@ -265,7 +268,7 @@ public final class Helpers {
                         Entity targetEntCap = targetEntity;
                         if(targetEntCap instanceof MultiPartEntityPart) targetEntCap = (Entity)(((MultiPartEntityPart)targetEntCap).parent);
                         final float attackDmgFinal = damage;
-                        attacked = execNullable(targetEntCap.getCapability(EventHandlers.SECONDHURTTIMER_CAP, null),
+                        attacked = execNullable(targetEntCap.getCapability(EventHandlers.OFFHAND_HURTRESISTANCE, null),
                                                 sht -> sht.attackEntityFromOffhand(targetEntity, dmgSource, attackDmgFinal), false);
                     }
                     else {
@@ -303,7 +306,7 @@ public final class Helpers {
                                 if(living != player && living != targetEntity && !player.isOnSameTeam(living) && player.getDistanceSq(living) < (reach * reach)) {
                                     living.knockBack(player, 0.4F, MathHelper.sin(player.rotationYaw * 0.017453292F), -MathHelper.cos(player.rotationYaw * 0.017453292F));
                                     if(offhand) {
-                                        execNullable(living.getCapability(EventHandlers.SECONDHURTTIMER_CAP, null),
+                                        execNullable(living.getCapability(EventHandlers.OFFHAND_HURTRESISTANCE, null),
                                                      sht -> sht.attackEntityFromOffhand(living, sweepingDamageSource, sweepingDamage));
                                     }
                                     else {

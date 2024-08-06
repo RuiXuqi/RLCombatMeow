@@ -40,13 +40,13 @@ public class CapabilityOffhandCooldown implements ICapabilityProvider, INBTSeria
 
     @Override
     public boolean hasCapability(Capability<?> capability, EnumFacing facing) {
-        return capability != null && capability == EventHandlers.TUTO_CAP;
+        return capability != null && capability == EventHandlers.OFFHAND_COOLDOWN;
     }
 
     @Override
     @SuppressWarnings("unchecked")
     public <T> T getCapability(Capability<T> capability, EnumFacing facing) {
-        return capability != null && capability == EventHandlers.TUTO_CAP ? (T) this : null;
+        return capability != null && capability == EventHandlers.OFFHAND_COOLDOWN ? (T) this : null;
     }
 
     @Override
@@ -99,7 +99,9 @@ public class CapabilityOffhandCooldown implements ICapabilityProvider, INBTSeria
         }
 
         @Override
-        public void readNBT(Capability<CapabilityOffhandCooldown> capability, CapabilityOffhandCooldown instance, EnumFacing side, NBTBase nbt) { }
+        public void readNBT(Capability<CapabilityOffhandCooldown> capability, CapabilityOffhandCooldown instance, EnumFacing side, NBTBase nbt) {
+        
+        }
     }
 
     public static class Factory implements Callable<CapabilityOffhandCooldown> {

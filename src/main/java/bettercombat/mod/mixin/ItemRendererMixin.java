@@ -289,7 +289,7 @@ public abstract class ItemRendererMixin {
 	public float rlcombat_vanillaItemRenderer_updateEquippedItem(float num, float min, float max) {
 		float val = num + this.equippedProgressOffHand;
 		if(val == 1) {
-			CapabilityOffhandCooldown capability = this.mc.player.getCapability(EventHandlers.TUTO_CAP, null);
+			CapabilityOffhandCooldown capability = this.mc.player.getCapability(EventHandlers.OFFHAND_COOLDOWN, null);
 			if(capability != null) {
 				float ohCooldown = 0;
 				int ohCooldownBeginning = capability.getOffhandBeginningCooldown();

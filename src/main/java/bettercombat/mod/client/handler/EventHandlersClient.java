@@ -4,7 +4,6 @@ import bettercombat.mod.capability.CapabilityOffhandCooldown;
 import bettercombat.mod.client.animation.util.BetterCombatHand;
 import bettercombat.mod.client.animation.util.CustomWeapon;
 import bettercombat.mod.client.gui.GuiCrosshairsBC;
-import bettercombat.mod.combat.ISecondHurtTimer;
 import bettercombat.mod.compat.BetterSurvivalHandler;
 import bettercombat.mod.compat.ModLoadedUtil;
 import bettercombat.mod.handler.EventHandlers;
@@ -18,7 +17,6 @@ import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.IEntityOwnable;
-import net.minecraft.entity.MultiPartEntityPart;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.*;
@@ -133,7 +131,7 @@ public class EventHandlersClient {
         if(!player.getActiveItemStack().isEmpty()) return;
         //Don't allow shield spamming with an offhand weapon
         if(player.getHeldItemMainhand().getItem() instanceof ItemShield) return;
-        if(ConfigurationHandler.server.requireFullEnergy && Helpers.execNullable(player.getCapability(EventHandlers.TUTO_CAP, null), CapabilityOffhandCooldown::getOffhandCooldown, 1) > 0) return;
+        if(ConfigurationHandler.server.requireFullEnergy && Helpers.execNullable(player.getCapability(EventHandlers.OFFHAND_COOLDOWN, null), CapabilityOffhandCooldown::getOffhandCooldown, 1) > 0) return;
         
         ItemStack stackOffHand = player.getHeldItemOffhand();
         if(stackOffHand.isEmpty() || !ConfigurationHandler.isItemAttackUsableOffhand(stackOffHand.getItem())) return;
@@ -159,25 +157,19 @@ public class EventHandlersClient {
                 mov.entityHit = InFHandler.getMultipartParent(mov.entityHit);
             }
             
-            ISecondHurtTimer sht;
-            if(mov.entityHit instanceof MultiPartEntityPart) sht = ((Entity)(((MultiPartEntityPart)mov.entityHit).parent)).getCapability(EventHandlers.SECONDHURTTIMER_CAP, null);
-            else sht = mov.entityHit.getCapability(EventHandlers.SECONDHURTTIMER_CAP, null);
-            
-            if(sht != null && sht.getHurtTimerBCM() <= 0) {
-                if(shouldAttack(mov.entityHit, player)) {
-                    Entity mount = player.getRidingEntity();
-                    if(player.isRiding() && mount != null) PacketHandler.instance.sendToServer(new PacketOffhandAttack(mov.entityHit.getEntityId(), mount.motionX, mount.motionY, mount.motionZ));
-                    else PacketHandler.instance.sendToServer(new PacketOffhandAttack(mov.entityHit.getEntityId(), player.motionX, player.motionY, player.motionZ));
-                    
-                    player.swingArm(EnumHand.OFF_HAND);
-                    resetOffhandAnimationCooldown(cooldown);
-                    betterCombatOffhand.initiateAnimation();
-                }
+            if(shouldAttack(mov.entityHit, player)) {
+                Entity mount = player.getRidingEntity();
+                if(player.isRiding() && mount != null) PacketHandler.instance.sendToServer(new PacketOffhandAttack(mov.entityHit.getEntityId(), mount.motionX, mount.motionY, mount.motionZ));
+                else PacketHandler.instance.sendToServer(new PacketOffhandAttack(mov.entityHit.getEntityId(), player.motionX, player.motionY, player.motionZ));
+                
+                player.swingArm(EnumHand.OFF_HAND);
+                resetOffhandAnimationCooldown(cooldown);
+                betterCombatOffhand.initiateAnimation();
             }
         }
         //Only do an offhand miss swing if the mainhand isn't a usable item (shield, food, bow,etc)
         else if((mov == null || mov.typeOfHit == RayTraceResult.Type.MISS) && player.getHeldItemMainhand().getItem().getItemUseAction(player.getHeldItemMainhand()) == EnumAction.NONE) {
-            CapabilityOffhandCooldown coh = player.getCapability(EventHandlers.TUTO_CAP, null);
+            CapabilityOffhandCooldown coh = player.getCapability(EventHandlers.OFFHAND_COOLDOWN, null);
             if(coh != null) {
                 coh.setOffhandCooldown(cooldown);
                 coh.setOffhandBeginningCooldown(cooldown);

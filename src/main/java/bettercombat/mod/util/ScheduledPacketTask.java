@@ -18,7 +18,7 @@ public class ScheduledPacketTask implements Runnable {
     public void run() {
         if(this.player == null) return;
 
-        Helpers.execNullable(this.player.getCapability(EventHandlers.TUTO_CAP, null), stg -> stg.setOffhandCooldown(this.message.cooldown));
-        Helpers.execNullable(this.player.getCapability(EventHandlers.TUTO_CAP, null), stg -> stg.setOffhandBeginningCooldown(this.message.cooldownBeginning));
+        Helpers.execNullable(this.player.getCapability(EventHandlers.OFFHAND_COOLDOWN, null), stg -> stg.setOffhandCooldown(this.message.cooldown));
+        Helpers.execNullable(this.player.getCapability(EventHandlers.OFFHAND_COOLDOWN, null), stg -> stg.setOffhandBeginningCooldown(this.message.cooldownBeginning));
     }
 }

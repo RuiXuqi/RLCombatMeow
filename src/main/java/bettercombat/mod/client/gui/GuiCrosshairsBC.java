@@ -58,7 +58,7 @@ public class GuiCrosshairsBC extends Gui {
                     float cooledStr = mc.player.getCooledAttackStrength(0.0F);
                     
                     if(ConfigurationHandler.isItemAttackUsableOffhand(mc.player.getHeldItemOffhand().getItem())) {
-                        CapabilityOffhandCooldown capability = mc.player.getCapability(EventHandlers.TUTO_CAP, null);
+                        CapabilityOffhandCooldown capability = mc.player.getCapability(EventHandlers.OFFHAND_COOLDOWN, null);
                         float ohCooldown = 0;
                         if(capability != null) {
                             int ohCooldownBeginning = capability.getOffhandBeginningCooldown();

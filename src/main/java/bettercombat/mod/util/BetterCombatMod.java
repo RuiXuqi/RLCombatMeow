@@ -1,5 +1,6 @@
 package bettercombat.mod.util;
 
+import bettercombat.mod.capability.CapabilityOffhandHurtResistance;
 import bettercombat.mod.handler.EventHandlers;
 import bettercombat.mod.capability.CapabilityOffhandCooldown;
 import net.minecraftforge.common.MinecraftForge;
@@ -37,6 +38,7 @@ public class BetterCombatMod {
     @Mod.EventHandler
     public void init(FMLInitializationEvent event) {
         CapabilityOffhandCooldown.register();
+        CapabilityOffhandHurtResistance.register();
         proxy.initConfigCache();
     }
 }
