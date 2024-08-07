@@ -558,5 +558,275 @@
         "stream": false
       }
     ]
+  },
+  "player.swing_2h": {
+    "category": "player",
+    "subtitle": "player.weapon",
+    "sounds": [
+      {
+        "name": "bettercombatmod:swing_2h_0",
+        "stream": false
+      },
+      {
+        "name": "bettercombatmod:swing_2h_1",
+        "stream": false
+      },
+      {
+        "name": "bettercombatmod:swing_2h_2",
+        "stream": false
+      }
+    ]
+  },
+  "player.swing_metal_axe": {
+    "category": "player",
+    "subtitle": "player.weapon",
+    "sounds": [
+      {
+        "name": "bettercombatmod:swing_metal_axe_0",
+        "stream": false
+      },
+      {
+        "name": "bettercombatmod:swing_metal_axe_1",
+        "stream": false
+      },
+      {
+        "name": "bettercombatmod:swing_metal_axe_2",
+        "stream": false
+      },
+      {
+        "name": "bettercombatmod:swing_metal_axe_3",
+        "stream": false
+      }
+    ]
+  },
+  "player.swing_metal_blade": {
+    "category": "player",
+    "subtitle": "player.weapon",
+    "sounds": [
+      {
+        "name": "bettercombatmod:swing_metal_blade_0",
+        "stream": false
+      },
+      {
+        "name": "bettercombatmod:swing_metal_blade_1",
+        "stream": false
+      },
+      {
+        "name": "bettercombatmod:swing_metal_blade_2",
+        "stream": false
+      },
+      {
+        "name": "bettercombatmod:swing_metal_blade_3",
+        "stream": false
+      },
+      {
+        "name": "bettercombatmod:swing_metal_blade_4",
+        "stream": false
+      },
+      {
+        "name": "bettercombatmod:swing_metal_blade_5",
+        "stream": false
+      },
+      {
+        "name": "bettercombatmod:swing_metal_blade_6",
+        "stream": false
+      }
+    ]
+  },
+  "player.swing_metal_blunt": {
+    "category": "player",
+    "subtitle": "player.weapon",
+    "sounds": [
+      {
+        "name": "bettercombatmod:swing_metal_blunt_0",
+        "stream": false
+      },
+      {
+        "name": "bettercombatmod:swing_metal_blunt_1",
+        "stream": false
+      },
+      {
+        "name": "bettercombatmod:swing_metal_blunt_2",
+        "stream": false
+      },
+      {
+        "name": "bettercombatmod:swing_metal_blunt_3",
+        "stream": false
+      }
+    ]
+  },
+  "player.swing_normal": {
+    "category": "player",
+    "subtitle": "player.weapon",
+    "sounds": [
+      {
+        "name": "bettercombatmod:swing_normal_0",
+        "stream": false
+      },
+      {
+        "name": "bettercombatmod:swing_normal_1",
+        "stream": false
+      },
+      {
+        "name": "bettercombatmod:swing_normal_2",
+        "stream": false
+      },
+      {
+        "name": "bettercombatmod:swing_normal_3",
+        "stream": false
+      }
+    ]
+  },
+  "player.swing_quick": {
+    "category": "player",
+    "subtitle": "player.weapon",
+    "sounds": [
+      {
+        "name": "bettercombatmod:swing_quick_0",
+        "stream": false
+      },
+      {
+        "name": "bettercombatmod:swing_quick_1",
+        "stream": false
+      }
+    ]
+  },
+  "player.swing_slow": {
+    "category": "player",
+    "subtitle": "player.weapon",
+    "sounds": [
+      {
+        "name": "bettercombatmod:swing_slow_0",
+        "stream": false
+      },
+      {
+        "name": "bettercombatmod:swing_slow_1",
+        "stream": false
+      },
+      {
+        "name": "bettercombatmod:swing_slow_2",
+        "stream": false
+      },
+      {
+        "name": "bettercombatmod:swing_slow_3",
+        "stream": false
+      },
+      {
+        "name": "bettercombatmod:swing_slow_4",
+        "stream": false
+      },
+      {
+        "name": "bettercombatmod:swing_slow_5",
+        "stream": false
+      }
+    ]
+  },
+  "player.equip_blade": {
+    "category": "player",
+    "subtitle": "player.weapon",
+    "sounds": [
+      {
+        "name": "bettercombatmod:equip_blade_0",
+        "stream": false
+      },
+      {
+        "name": "bettercombatmod:equip_blade_1",
+        "stream": false
+      },
+      {
+        "name": "bettercombatmod:equip_blade_2",
+        "stream": false
+      },
+      {
+        "name": "bettercombatmod:equip_blade_3",
+        "stream": false
+      }
+    ]
+  },
+  "player.equip_axe": {
+    "category": "player",
+    "subtitle": "player.weapon",
+    "sounds": [
+      {
+        "name": "bettercombatmod:equip_axe_0",
+        "stream": false
+      },
+      {
+        "name": "bettercombatmod:equip_axe_1",
+        "stream": false
+      },
+      {
+        "name": "bettercombatmod:equip_axe_2",
+        "stream": false
+      }
+    ]
+  },
+  "player.equip_other": {
+    "category": "player",
+    "subtitle": "player.weapon",
+    "sounds": [
+      {
+        "name": "bettercombatmod:equip_other_0",
+        "stream": false
+      },
+      {
+        "name": "bettercombatmod:equip_other_1",
+        "stream": false
+      },
+      {
+        "name": "bettercombatmod:equip_other_2",
+        "stream": false
+      }
+    ]
+  },
+  "player.sheathe_blade": {
+    "category": "player",
+    "subtitle": "player.weapon",
+    "sounds": [
+      {
+        "name": "bettercombatmod:sheathe_blade_0",
+        "stream": false
+      },
+      {
+        "name": "bettercombatmod:sheathe_blade_1",
+        "stream": false
+      },
+      {
+        "name": "bettercombatmod:sheathe_blade_2",
+        "stream": false
+      }
+    ]
+  },
+  "player.sheathe_axe": {
+    "category": "player",
+    "subtitle": "player.weapon",
+    "sounds": [
+      {
+        "name": "bettercombatmod:sheathe_axe_0",
+        "stream": false
+      },
+      {
+        "name": "bettercombatmod:sheathe_axe_1",
+        "stream": false
+      }
+    ]
+  },
+  "player.sheathe_other": {
+    "category": "player",
+    "subtitle": "player.weapon",
+    "sounds": [
+      {
+        "name": "bettercombatmod:sheathe_other_0",
+        "stream": false
+      },
+      {
+        "name": "bettercombatmod:sheathe_other_1",
+        "stream": false
+      },
+      {
+        "name": "bettercombatmod:sheathe_other_2",
+        "stream": false
+      }
+    ]
   }
 }

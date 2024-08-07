@@ -32,6 +32,7 @@ import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
+import org.apache.logging.log4j.Level;
 
 /**
  * Custom Animation and Sound Systems based on and modified from ImmersiveCombat
@@ -257,6 +258,10 @@ public class EventHandlersClient {
             }
             else if(betterCombatMainhand.equipSoundTimer > 0 && --betterCombatMainhand.equipSoundTimer == 0) {
                 mainhandEquipSound();
+                //Don't play two equip sounds right after each other if sounds are set to mono
+                if(ConfigurationHandler.client.customWeaponSoundsMono && betterCombatOffhand.equipSoundTimer > 0) {
+                    betterCombatOffhand.equipSoundTimer = 0;
+                }
             }
             
             betterCombatOffhand.tick();
@@ -267,6 +272,10 @@ public class EventHandlersClient {
             }
             else if(betterCombatOffhand.equipSoundTimer > 0 && --betterCombatOffhand.equipSoundTimer == 0) {
                 offhandEquipSound();
+                //Don't play two equip sounds right after each other if sounds are set to mono
+                if(ConfigurationHandler.client.customWeaponSoundsMono && betterCombatMainhand.equipSoundTimer > 0) {
+                    betterCombatMainhand.equipSoundTimer = 0;
+                }
             }
         }
     }
@@ -286,6 +295,10 @@ public class EventHandlersClient {
         if(reequip || nonequal) {
             if(betterCombatMainhand.equipSoundTimer == 0 && betterCombatMainhand.hasCustomWeapon()) {
                 mainhandSheatheSound();
+                //Don't play two mono sheathe sounds right after each other
+                if(ConfigurationHandler.client.customWeaponSoundsMono && betterCombatOffhand.equipSoundTimer == 0 && betterCombatOffhand.hasCustomWeapon()) {
+                    betterCombatOffhand.equipSoundTimer = -1;
+                }
             }
             
             itemStackMainhand = heldStack;
@@ -303,6 +316,8 @@ public class EventHandlersClient {
                 }
             }
         }
+        //Undo mono sheathe delay after next tick
+        else if(betterCombatOffhand.equipSoundTimer == -1) betterCombatOffhand.equipSoundTimer = 0;
     }
 
     public static void checkItemstackChangedOffhand() {
@@ -314,6 +329,10 @@ public class EventHandlersClient {
         if(nonequal || reequip) {
             if(betterCombatOffhand.equipSoundTimer == 0 && betterCombatOffhand.hasCustomWeapon()) {
                 offhandSheatheSound();
+                //Don't play two mono sheathe sounds right after each other
+                if(ConfigurationHandler.client.customWeaponSoundsMono && betterCombatMainhand.equipSoundTimer == 0 && betterCombatMainhand.hasCustomWeapon()) {
+                    betterCombatMainhand.equipSoundTimer = -1;
+                }
             }
             
             itemStackOffhand = heldStack;
@@ -339,6 +358,8 @@ public class EventHandlersClient {
                 }
             }
         }
+        //Undo mono sheathe delay after next tick
+        else if(betterCombatMainhand.equipSoundTimer == -1) betterCombatMainhand.equipSoundTimer = 0;
     }
 
     public static void resetMainhandAnimationCooldown(int cooldown) {

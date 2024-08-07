@@ -327,7 +327,7 @@ public class SoundHandler {
         try {
             if(player.world.isRemote) {
                 //Play stereo sound if it exists, otherwise mono, only play it to client player if they are the source of the sound
-                player.world.playSound(player, player.posX, player.posY, player.posZ, stereo == null ? mono : stereo, player.getSoundCategory(), volume, pitch);
+                player.world.playSound(player, player.posX, player.posY, player.posZ, (stereo == null || ConfigurationHandler.client.customWeaponSoundsMono) ? mono : stereo, player.getSoundCategory(), volume, pitch);
             }
             //TODO: handle sound packet so others hear new custom sounds from players
             //TODO: config option to only play mono sounds

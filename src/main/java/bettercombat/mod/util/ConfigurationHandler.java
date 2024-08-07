@@ -151,6 +151,10 @@ public class ConfigurationHandler {
         @Config.Comment("If Custom Weapon Swing Sounds is enabled, should swings with undefined items/empty hands also make a sound")
         @Config.Name("Custom Punch Swing Sounds")
         public boolean customPunchSwingSounds = true;
+        
+        @Config.Comment("If Custom Weapon Sounds are enabled, makes them all only play in mono, instead of using stereo")
+        @Config.Name("Custom Weapon Sounds Mono")
+        public boolean customWeaponSoundsMono = false;
 
         @Config.Comment("If all attacks should spawn the sweep particles")
         @Config.Name("More Sweep Particles")
@@ -223,11 +227,11 @@ public class ConfigurationHandler {
         )
         @Config.Name("Item Class Custom Weapon Entries")
         public String[] weaponClassCustomWeapons = new String[] {
-                "net.minecraft.item.ItemSword, SWEEP_COMBO, PUNCH, BLADE, ONEHAND, 1",
+                "net.minecraft.item.ItemSword, SWEEP_1, DIG, BLADE, ONEHAND, 1",
                 "net.minecraft.item.ItemAxe, CHOP, CHOP, AXE, ONEHAND, 1",
                 "net.minecraft.item.ItemSpade, CHOP, DIG, AXE, ONEHAND, 1",
-                "net.minecraft.item.ItemPickaxe, CHOP, PUNCH, AXE, ONEHAND, 1",
-                "net.minecraft.item.ItemHoe, CHOP, PUNCH, AXE, ONEHAND, 1"
+                "net.minecraft.item.ItemPickaxe, CHOP, CHOP, AXE, ONEHAND, 1",
+                "net.minecraft.item.ItemHoe, CHOP, DIG, AXE, ONEHAND, 1"
         };
 
         @Config.Comment("Item ids in the format \"domain:itemname\" with custom weapon entries to be used for animations and sounds" + "\n" +
