@@ -21,6 +21,7 @@ public enum AnimationEnum {
     CHOP(new AnimationChop()),
     DIG(new AnimationDig()),
     STAB(new AnimationStab()),
+    STAB_CAESTUS(new AnimationStabCaestus()),
     PUNCH(new AnimationPunch());
 
     private final static Random rand = new Random();

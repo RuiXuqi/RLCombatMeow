@@ -64,9 +64,25 @@ public abstract class ItemRendererMixin {
 			//Sync equipped progress
 			AnimationHandler.equippedProgressMainhand = equipProgress;
 			//TODO: handle this better
-			if(EventHandlersClient.betterCombatMainhand.getAttackAnimationEnum() == AnimationEnum.STAB && !EventHandlersClient.betterCombatMainhand.firstRaise && doCustomAnimations) {
-				//Don't do re-equip animation for stab during swing
-				AnimationHandler.equippedProgressMainhand = 0.0F;
+			if(!EventHandlersClient.betterCombatMainhand.firstRaise && doCustomAnimations) {
+				if(swingProgressNew > 0) {
+					if(EventHandlersClient.betterCombatMainhand.getAttackAnimationEnum() == AnimationEnum.STAB || EventHandlersClient.betterCombatMainhand.getAttackAnimationEnum() == AnimationEnum.STAB_CAESTUS) {
+						//Don't do re-equip animation for stabs during attack swing
+						AnimationHandler.equippedProgressMainhand = 0.0F;
+					}
+				}
+				else if(swingProgress > 0) {
+					if(EventHandlersClient.betterCombatMainhand.getMiningAnimationEnum() == AnimationEnum.STAB || EventHandlersClient.betterCombatMainhand.getMiningAnimationEnum() == AnimationEnum.STAB_CAESTUS) {
+						//Don't do re-equip animation for stabs during mining swing
+						AnimationHandler.equippedProgressMainhand = 0.0F;
+					}
+				}
+				else {
+					if(EventHandlersClient.betterCombatMainhand.getAttackAnimationEnum() == AnimationEnum.STAB || EventHandlersClient.betterCombatMainhand.getAttackAnimationEnum() == AnimationEnum.STAB_CAESTUS) {
+						//Don't do re-equip animation for stabs after attack swing (Doesn't function properly for handling after mining swing is done but thats niche for now
+						AnimationHandler.equippedProgressMainhand = 0.0F;
+					}
+				}
 			}
 			
 			//Weapon raise up after swing
@@ -187,9 +203,25 @@ public abstract class ItemRendererMixin {
 			//Sync equipped progress
 			AnimationHandler.equippedProgressOffhand = equipProgress;
 			//TODO: handle this better
-			if(EventHandlersClient.betterCombatOffhand.getAttackAnimationEnum() == AnimationEnum.STAB && !EventHandlersClient.betterCombatOffhand.firstRaise && doCustomAnimations) {
-				//Don't do re-equip animation for stab during swing
-				AnimationHandler.equippedProgressOffhand = 0.0F;
+			if(!EventHandlersClient.betterCombatOffhand.firstRaise && doCustomAnimations) {
+				if(swingProgressNew > 0) {
+					if(EventHandlersClient.betterCombatOffhand.getAttackAnimationEnum() == AnimationEnum.STAB || EventHandlersClient.betterCombatOffhand.getAttackAnimationEnum() == AnimationEnum.STAB_CAESTUS) {
+						//Don't do re-equip animation for stabs during attack swing
+						AnimationHandler.equippedProgressOffhand = 0.0F;
+					}
+				}
+				else if(swingProgress > 0) {
+					if(EventHandlersClient.betterCombatOffhand.getMiningAnimationEnum() == AnimationEnum.STAB || EventHandlersClient.betterCombatOffhand.getMiningAnimationEnum() == AnimationEnum.STAB_CAESTUS) {
+						//Don't do re-equip animation for stabs during mining swing
+						AnimationHandler.equippedProgressOffhand = 0.0F;
+					}
+				}
+				else {
+					if(EventHandlersClient.betterCombatOffhand.getAttackAnimationEnum() == AnimationEnum.STAB || EventHandlersClient.betterCombatOffhand.getAttackAnimationEnum() == AnimationEnum.STAB_CAESTUS) {
+						//Don't do re-equip animation for stabs after attack swing (Doesn't function properly for handling after mining swing is done but thats niche for now
+						AnimationHandler.equippedProgressOffhand = 0.0F;
+					}
+				}
 			}
 			
 			//Weapon raise up after swing

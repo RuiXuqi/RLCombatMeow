@@ -217,7 +217,7 @@ public class ConfigurationHandler {
                 "HandType: The hand type to be used to also determine what sounds are played" + "\n" +
                 "Priority: The class priority, for if an item is an instance of multiple defined classes" + "\n" +
                 " " + "\n" +
-                "Valid Animations: SWEEP_COMBO, SWEEP_1, SWEEP_2, CHOP, DIG, STAB, PUNCH" + "\n" +
+                "Valid Animations: SWEEP_COMBO, SWEEP_1, SWEEP_2, CHOP, DIG, STAB, STAB_CAESTUS, PUNCH" + "\n" +
                 "Valid SoundTypes: BLADE, AXE, BLUNT, DEFAULT" + "\n" +
                 "Valid HandTypes: ONEHAND, TWOHAND" + "\n"
         )
@@ -240,7 +240,7 @@ public class ConfigurationHandler {
                 "SoundType: The sound type to be used to determine what sounds are played" + "\n" +
                 "HandType: The hand type to be used to also determine what sounds are played" + "\n" +
                 " " + "\n" +
-                "Valid Animations: SWEEP_COMBO, SWEEP_1, SWEEP_2, CHOP, DIG, STAB, PUNCH" + "\n" +
+                "Valid Animations: SWEEP_COMBO, SWEEP_1, SWEEP_2, CHOP, DIG, STAB, STAB_CAESTUS, PUNCH" + "\n" +
                 "Valid SoundTypes: BLADE, AXE, BLUNT, DEFAULT" + "\n" +
                 "Valid HandTypes: ONEHAND, TWOHAND" + "\n")
         @Config.Name("Item ID Custom Weapon Entries")
