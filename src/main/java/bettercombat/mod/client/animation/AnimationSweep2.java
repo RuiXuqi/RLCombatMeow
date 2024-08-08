@@ -103,4 +103,14 @@ public class AnimationSweep2 extends AnimationSweep {
         GlStateManager.rotate(i * rotateCounterClockwise * hand.rotateCounterClockwiseVariance, 0.0F, 1.0F, 0.0F);
         GlStateManager.rotate(i * rotateLeft * hand.rotateLeftVariance, 0.0F, 0.0F, 1.0F);
     }
+    
+    @Override
+    public float getCameraPitchMult() {
+        return -0.5F;
+    }
+    
+    @Override
+    public float getCameraYawMult() {
+        return 1.0F;
+    }
 }

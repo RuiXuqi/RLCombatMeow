@@ -5,6 +5,7 @@ import java.util.Random;
 import bettercombat.mod.client.animation.util.CustomWeapon.WeaponProperty;
 import bettercombat.mod.client.animation.util.CustomWeapon.SoundType;
 import bettercombat.mod.mixin.IEntityLivingBaseMixin;
+import bettercombat.mod.util.ConfigurationHandler;
 import net.minecraft.client.Minecraft;
 
 /**
@@ -44,6 +45,9 @@ public class BetterCombatHand {
     public static int maximumCooldownTicks = 15;
     //Cooldown used for sound effects
     public int attackCooldown = minimumCooldownTicks;
+    
+    public int sprintingTimer = 0;
+    public int sprintingTimerPrev = 0;
     
     public float moveRightVariance = 1.0F;
     public float moveUpVariance = 1.0F;
@@ -90,6 +94,18 @@ public class BetterCombatHand {
         }
         
         this.swingProgressFloat = (float)this.swingProgressInt / (float)i;
+        
+        sprintingTimerPrev = sprintingTimer;
+        if(Minecraft.getMinecraft().player.isSprinting() && !(this.swingProgressFloat > 0)) {
+            if(sprintingTimer < 20 && ConfigurationHandler.client.sprintingWeaponTilt) sprintingTimer += 5;
+        }
+        else if(sprintingTimer > 0) {
+            sprintingTimer -= 5;
+            
+            if(sprintingTimer > 0 && this.swingProgressFloat > 0) {
+                sprintingTimer -= 5;
+            }
+        }
     }
     
     public void swingHand() {

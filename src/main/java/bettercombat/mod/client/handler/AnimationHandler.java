@@ -23,8 +23,6 @@ public class AnimationHandler {
     //Raises the weapon up and down to simulate breathing
     public static float breatheTicks = 0.0F;
     public static float lastBreatheTicks = 0.0F;
-    public static int mainhandSprintingTimer = 0;
-    public static int offhandSprintingTimer = 0;
     public static boolean tooClose = false;
     public static float tooCloseAmount = 0.0F;
     public static float lastTooCloseAmount = 0.0F;
@@ -36,18 +34,7 @@ public class AnimationHandler {
     
     public static final float PI = (float)Math.PI;
     
-    public static boolean shouldSpecialRenderMainhand(EntityPlayer player, float partialTick) {
-        if(player.isSprinting() && !(EventHandlersClient.betterCombatMainhand.getSwingProgress(partialTick) > 0)) {
-            if(mainhandSprintingTimer < 20 && ConfigurationHandler.client.sprintingWeaponTilt) mainhandSprintingTimer += 2;
-        }
-        else if(mainhandSprintingTimer > 0) {
-            mainhandSprintingTimer -= 2;
-            
-            if(mainhandSprintingTimer > 0 && (EventHandlersClient.betterCombatMainhand.getSwingProgress(partialTick) > 0)) {
-                mainhandSprintingTimer -= 2;
-            }
-        }
-        
+    public static boolean shouldSpecialRenderMainhand(EntityPlayer player) {
         if(EventHandlersClient.betterCombatMainhand.hasCustomWeapon()) {
             if(Helpers.isHandActive(player, EnumHand.MAIN_HAND)) {
                 return false;
@@ -72,20 +59,7 @@ public class AnimationHandler {
         return false;
     }
     
-    public static boolean shouldSpecialRenderOffhand(EntityPlayer player, float partialTick) {
-        if(player.isSprinting() && !(EventHandlersClient.betterCombatOffhand.getSwingProgress(partialTick) > 0)) {
-            if(offhandSprintingTimer < 20 && ConfigurationHandler.client.sprintingWeaponTilt) {
-                offhandSprintingTimer += 2;
-            }
-        }
-        else if(offhandSprintingTimer > 0) {
-            offhandSprintingTimer -= 2;
-            
-            if(offhandSprintingTimer > 0 && (EventHandlersClient.betterCombatOffhand.getSwingProgress(partialTick) > 0)) {
-                offhandSprintingTimer -= 2;
-            }
-        }
-        
+    public static boolean shouldSpecialRenderOffhand(EntityPlayer player) {
         if(EventHandlersClient.betterCombatOffhand.hasCustomWeapon()) {
             if(Helpers.isHandActive(player, EnumHand.OFF_HAND)) {
                 return false;

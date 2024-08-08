@@ -4,10 +4,7 @@ import bettercombat.mod.client.animation.util.BetterCombatHand;
 import bettercombat.mod.client.animation.util.IAnimation;
 import bettercombat.mod.client.handler.AnimationHandler;
 import bettercombat.mod.client.handler.EventHandlersClient;
-import bettercombat.mod.util.ConfigurationHandler;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.math.MathHelper;
 
 /**
@@ -28,11 +25,6 @@ public class AnimationChop implements IAnimation {
     }
 
     @Override
-    public void animationCameraMainhand(boolean rightHanded, float swingProgress, float partialTick) {
-        this.animateCamera(rightHanded, swingProgress, partialTick, EventHandlersClient.betterCombatMainhand);
-    }
-
-    @Override
     public void animationOffhand(boolean rightHanded, float swingProgress, float partialTick) {
         //Raise chopping animation as equipped shift puts it very low
         if(AnimationHandler.equippedProgressOffhand > 0.5F) {
@@ -42,14 +34,11 @@ public class AnimationChop implements IAnimation {
     }
 
     @Override
-    public void animationCameraOffhand(boolean rightHanded, float swingProgress, float partialTick) {
-        this.animateCamera(!rightHanded, swingProgress, partialTick, EventHandlersClient.betterCombatOffhand);
-    }
-
-    @Override
     public void positionMainhand(boolean rightHanded, float partialTick) {
         /* If the weapon is an axe, position it upwards */
-        GlStateManager.rotate(-11.0F-AnimationHandler.mainhandSprintingTimer,1.0F,0.0F,0.0F);
+        GlStateManager.rotate(-11.0F - (EventHandlersClient.betterCombatMainhand.sprintingTimerPrev +
+                (partialTick * (EventHandlersClient.betterCombatMainhand.sprintingTimer - EventHandlersClient.betterCombatMainhand.sprintingTimerPrev))
+        ), 1.0F, 0.0F, 0.0F);
         /* Position the weapon in default position */
         int i = rightHanded ? 1 : -1;
         GlStateManager.translate(i*0.02F, 0.08F, 0.0F);
@@ -60,7 +49,9 @@ public class AnimationChop implements IAnimation {
     @Override
     public void positionOffhand(boolean rightHanded, float partialTick) {
         /* If the weapon is an axe, position it upwards */
-        GlStateManager.rotate(-11.0F-AnimationHandler.offhandSprintingTimer,1.0F,0.0F,0.0F);
+        GlStateManager.rotate(-11.0F - (EventHandlersClient.betterCombatOffhand.sprintingTimerPrev +
+                (partialTick * (EventHandlersClient.betterCombatOffhand.sprintingTimer - EventHandlersClient.betterCombatOffhand.sprintingTimerPrev))
+        ),1.0F,0.0F,0.0F);
         /* Position the weapon in default position */
         int i = rightHanded ? -1 : 1;
         GlStateManager.translate(i*0.02F, 0.08F, 0.0F);
@@ -133,21 +124,13 @@ public class AnimationChop implements IAnimation {
         GlStateManager.rotate(i * rotateLeft * hand.rotateLeftVariance, 0.0F, 0.0F, 1.0F);
     }
     
-    private void animateCamera(boolean rightHanded, float swingProgress, float partialTick, BetterCombatHand hand) {
-        //Reduce movement with less cooldown
-        float f = (float)hand.attackCooldown / 12.0F;
-        
-        /* Camera */
-        EntityPlayer player = Minecraft.getMinecraft().player;
-        float rotation = MathHelper.sin( 0.75F + swingProgress * 2.5F * AnimationHandler.PI);
-        if(swingProgress < 0.75F || rotation < 0.0F) {
-            player.cameraPitch += rotation * ConfigurationHandler.client.cameraPitchSwing * 2.0F * f;
-        }
-        if(rightHanded) {
-            player.rotationYaw -= rotation*ConfigurationHandler.client.cameraYawSwing * 0.2F * f;
-        }
-        else {
-            player.rotationYaw += rotation*ConfigurationHandler.client.cameraYawSwing * 0.2F * f;
-        }
+    @Override
+    public float getCameraPitchMult() {
+        return 2.0F;
+    }
+    
+    @Override
+    public float getCameraYawMult() {
+        return 0.2F;
     }
 }

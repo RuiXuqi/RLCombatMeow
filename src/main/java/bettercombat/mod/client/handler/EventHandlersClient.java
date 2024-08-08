@@ -25,14 +25,12 @@ import net.minecraft.util.EnumHand;
 import net.minecraft.util.EnumHandSide;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.RayTraceResult;
-import net.minecraftforge.client.ForgeHooksClient;
 import net.minecraftforge.client.event.MouseEvent;
 import net.minecraftforge.client.event.RenderGameOverlayEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
-import org.apache.logging.log4j.Level;
 
 /**
  * Custom Animation and Sound Systems based on and modified from ImmersiveCombat
@@ -205,49 +203,47 @@ public class EventHandlersClient {
 
             checkItemstacksChanged();
 
-            /* Wall-aware positioning */
-            if(mc.objectMouseOver != null) {
-                double hX;
-                double hY;
-                double hZ;
-                AnimationHandler.lastTooCloseAmount = AnimationHandler.tooCloseAmount;
-                
-                if(ConfigurationHandler.client.tooCloseAnimationBlocks && mc.objectMouseOver.hitVec != null) {
-                    hX = mc.player.posX - mc.objectMouseOver.hitVec.x;
-                    hY = (mc.player.getEyeHeight() + mc.player.posY) - mc.objectMouseOver.hitVec.y;
-                    hZ = mc.player.posZ - mc.objectMouseOver.hitVec.z;
+            //Wall-aware positioning, only bother raytracing if enabled
+            boolean close = false;
+            if(mc.getRenderViewEntity() != null && (ConfigurationHandler.client.tooCloseAnimationBlocks || ConfigurationHandler.client.tooCloseAnimationEntities) && (ConfigurationHandler.client.tooCloseAnimationIntensity > 0.0F)) {
+                RayTraceResult rtr = ReachFixUtil.pointedObjectIgnorePassable(mc.getRenderViewEntity(), mc.player, EnumHand.MAIN_HAND, mc.world, mc.getRenderPartialTicks());
+                if(rtr != null) {
+                    double hX;
+                    double hY;
+                    double hZ;
+                    AnimationHandler.lastTooCloseAmount = AnimationHandler.tooCloseAmount;
                     
-                    if((hX = hX * hX) < ConfigurationHandler.client.tooCloseAnimationDistance &&
-                            (hY = hY * hY) < ConfigurationHandler.client.tooCloseAnimationDistance &&
-                            (hZ = hZ * hZ) < ConfigurationHandler.client.tooCloseAnimationDistance) {
-                        AnimationHandler.tooCloseAmount = (float)MathHelper.clamp(0.4D - ((hX + hY + hZ) / (3*ConfigurationHandler.client.tooCloseAnimationDistance)), 0.0D, 0.4D);
-                        AnimationHandler.tooClose = true;
+                    if(ConfigurationHandler.client.tooCloseAnimationBlocks && rtr.hitVec != null) {
+                        hX = mc.player.posX - rtr.hitVec.x;
+                        hY = (mc.player.getEyeHeight() + mc.player.posY) - rtr.hitVec.y;
+                        hZ = mc.player.posZ - rtr.hitVec.z;
+                        
+                        if((hX = hX * hX) < ConfigurationHandler.client.tooCloseAnimationDistance &&
+                                (hY = hY * hY) < ConfigurationHandler.client.tooCloseAnimationDistance &&
+                                (hZ = hZ * hZ) < ConfigurationHandler.client.tooCloseAnimationDistance) {
+                            AnimationHandler.tooCloseAmount = (float)MathHelper.clamp(0.4D - ((hX + hY + hZ) / (3*ConfigurationHandler.client.tooCloseAnimationDistance)), 0.0D, 0.4D);
+                            AnimationHandler.tooClose = true;
+                            close = true;
+                        }
                     }
-                    else {
-                        AnimationHandler.tooCloseAmount = 0.0F;
-                        AnimationHandler.tooClose = false;
+                    else if(ConfigurationHandler.client.tooCloseAnimationEntities && rtr.entityHit != null) {
+                        hX = mc.player.posX - (rtr.entityHit.posX + rtr.entityHit.width * 0.5D);
+                        hY = (mc.player.getEyeHeight() + mc.player.posY) - (rtr.entityHit.posY + rtr.entityHit.height * 0.5D);
+                        hZ = mc.player.posZ - (rtr.entityHit.posZ + rtr.entityHit.width * 0.5D);
+                        
+                        if((hX = hX * hX) < ConfigurationHandler.client.tooCloseAnimationDistance &&
+                                (hY = hY * hY) < ConfigurationHandler.client.tooCloseAnimationDistance &&
+                                (hZ = hZ * hZ) < ConfigurationHandler.client.tooCloseAnimationDistance) {
+                            AnimationHandler.tooCloseAmount = (float)MathHelper.clamp(0.4D - ((hX + hY + hZ) / (3*ConfigurationHandler.client.tooCloseAnimationDistance)), 0.0D, 0.4D);
+                            AnimationHandler.tooClose = true;
+                            close = true;
+                        }
                     }
                 }
-                else if(ConfigurationHandler.client.tooCloseAnimationEntities && mc.objectMouseOver.entityHit != null) {
-                    hX = mc.player.posX - (mc.objectMouseOver.entityHit.posX + mc.objectMouseOver.entityHit.width * 0.5D);
-                    hY = (mc.player.getEyeHeight() + mc.player.posY) - (mc.objectMouseOver.entityHit.posY + mc.objectMouseOver.entityHit.height * 0.5D);
-                    hZ = mc.player.posZ - (mc.objectMouseOver.entityHit.posZ + mc.objectMouseOver.entityHit.width * 0.5D);
-                    
-                    if((hX = hX * hX) < ConfigurationHandler.client.tooCloseAnimationDistance &&
-                            (hY = hY * hY) < ConfigurationHandler.client.tooCloseAnimationDistance &&
-                            (hZ = hZ * hZ) < ConfigurationHandler.client.tooCloseAnimationDistance) {
-                        AnimationHandler.tooCloseAmount = (float)MathHelper.clamp(0.4D - ((hX + hY + hZ) / (3*ConfigurationHandler.client.tooCloseAnimationDistance)), 0.0D, 0.4D);
-                        AnimationHandler.tooClose = true;
-                    }
-                    else {
-                        AnimationHandler.tooCloseAmount = 0.0F;
-                        AnimationHandler.tooClose = false;
-                    }
-                }
-                else {
-                    AnimationHandler.tooCloseAmount = 0.0F;
-                    AnimationHandler.tooClose = false;
-                }
+            }
+            if(!close) {
+                AnimationHandler.tooCloseAmount = 0.0F;
+                AnimationHandler.tooClose = false;
             }
             
             betterCombatMainhand.tick();
@@ -289,10 +285,8 @@ public class EventHandlersClient {
         EntityPlayer player = Minecraft.getMinecraft().player;
         ItemStack heldStack = player.getHeldItemMainhand();
         
-        boolean reequip = ForgeHooksClient.shouldCauseReequipAnimation(itemStackMainhand, heldStack, player.inventory.currentItem);
         boolean nonequal = !ItemStack.areItemsEqualIgnoreDurability(itemStackMainhand, heldStack);
-        
-        if(reequip || nonequal) {
+        if(nonequal) {
             if(betterCombatMainhand.equipSoundTimer == 0 && betterCombatMainhand.hasCustomWeapon()) {
                 mainhandSheatheSound();
                 //Don't play two mono sheathe sounds right after each other
@@ -323,10 +317,9 @@ public class EventHandlersClient {
     public static void checkItemstackChangedOffhand() {
         EntityPlayer player = Minecraft.getMinecraft().player;
         ItemStack heldStack = player.getHeldItemOffhand();
-        boolean reequip = ForgeHooksClient.shouldCauseReequipAnimation(itemStackOffhand, heldStack, -1);
-        boolean nonequal = !ItemStack.areItemsEqualIgnoreDurability(itemStackOffhand, heldStack);
         
-        if(nonequal || reequip) {
+        boolean nonequal = !ItemStack.areItemsEqualIgnoreDurability(itemStackOffhand, heldStack);
+        if(nonequal) {
             if(betterCombatOffhand.equipSoundTimer == 0 && betterCombatOffhand.hasCustomWeapon()) {
                 offhandSheatheSound();
                 //Don't play two mono sheathe sounds right after each other

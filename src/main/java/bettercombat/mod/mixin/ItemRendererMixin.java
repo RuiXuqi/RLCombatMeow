@@ -2,6 +2,7 @@ package bettercombat.mod.mixin;
 
 import bettercombat.mod.capability.CapabilityOffhandCooldown;
 import bettercombat.mod.client.animation.util.AnimationEnum;
+import bettercombat.mod.client.animation.util.CameraTransformHandler;
 import bettercombat.mod.client.handler.AnimationHandler;
 import bettercombat.mod.client.handler.EventHandlersClient;
 import bettercombat.mod.handler.EventHandlers;
@@ -18,6 +19,7 @@ import net.minecraft.util.math.MathHelper;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
@@ -34,6 +36,12 @@ public abstract class ItemRendererMixin {
 	
 	@Shadow private float equippedProgressOffHand;
 	
+	@Unique
+	private final CameraTransformHandler rlcombat$mainhandCameraHandler = new CameraTransformHandler();
+	
+	@Unique
+	private final CameraTransformHandler rlcombat$offhandCameraHandler = new CameraTransformHandler();
+	
 	/**
 	 * Handle custom rendering for the mainhand
 	 */
@@ -43,7 +51,7 @@ public abstract class ItemRendererMixin {
 	)
 	public void rlcombat_vanillaItemRenderer_renderItemInFirstPerson_mainHand(ItemRenderer instance, AbstractClientPlayer player, float partialTicks, float interpPitch, EnumHand hand, float swingProgress, ItemStack stack, float equipProgress) {
 		boolean doCustomAnimations = ConfigurationHandler.client.customWeaponAttackAnimations;
-		if(AnimationHandler.shouldSpecialRenderMainhand(player, partialTicks)) {
+		if(AnimationHandler.shouldSpecialRenderMainhand(player)) {
 			GlStateManager.pushMatrix();
 			
 			//Handle idle breathing animation
@@ -85,6 +93,9 @@ public abstract class ItemRendererMixin {
 				}
 			}
 			
+			//Camera movement
+			if(doCustomAnimations) rlcombat$mainhandCameraHandler.animateCamera(EventHandlersClient.betterCombatMainhand, rightHanded, swingProgressNew, partialTicks);
+			
 			//Weapon raise up after swing
 			GlStateManager.translate(0.0F, AnimationHandler.equippedProgressMainhand * -0.6F, 0.0F);
 			
@@ -98,8 +109,6 @@ public abstract class ItemRendererMixin {
 					
 					//Swing animation
 					EventHandlersClient.betterCombatMainhand.getActiveAttackAnimation().animationMainhand(rightHanded, swingProgressNew, partialTicks);
-					//Camera movement
-					EventHandlersClient.betterCombatMainhand.getActiveAttackAnimation().animationCameraMainhand(rightHanded, swingProgressNew, partialTicks);
 				}
 				else {
 					//Default punching animation
@@ -182,7 +191,7 @@ public abstract class ItemRendererMixin {
 	)
 	public void rlcombat_vanillaItemRenderer_renderItemInFirstPerson_offHand(ItemRenderer instance, AbstractClientPlayer player, float partialTicks, float interpPitch, EnumHand hand, float swingProgress, ItemStack stack, float equipProgress) {
 		boolean doCustomAnimations = ConfigurationHandler.client.customWeaponAttackAnimations;
-		if(AnimationHandler.shouldSpecialRenderOffhand(player, partialTicks)) {
+		if(AnimationHandler.shouldSpecialRenderOffhand(player)) {
 			GlStateManager.pushMatrix();
 			
 			//Handle idle breathing animation
@@ -224,6 +233,9 @@ public abstract class ItemRendererMixin {
 				}
 			}
 			
+			//Camera movement
+			if(doCustomAnimations) rlcombat$offhandCameraHandler.animateCamera(EventHandlersClient.betterCombatOffhand, !rightHanded, swingProgressNew, partialTicks);
+			
 			//Weapon raise up after swing
 			GlStateManager.translate(0.0F, AnimationHandler.equippedProgressOffhand * -0.6F, 0.0F);
 			
@@ -237,8 +249,6 @@ public abstract class ItemRendererMixin {
 					
 					//Swing animation
 					EventHandlersClient.betterCombatOffhand.getActiveAttackAnimation().animationOffhand(rightHanded, swingProgressNew, partialTicks);
-					//Camera movement
-					EventHandlersClient.betterCombatOffhand.getActiveAttackAnimation().animationCameraOffhand(rightHanded, swingProgressNew, partialTicks);
 				}
 				else {
 					//Default punching animation

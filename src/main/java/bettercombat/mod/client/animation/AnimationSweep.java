@@ -4,10 +4,7 @@ import bettercombat.mod.client.animation.util.BetterCombatHand;
 import bettercombat.mod.client.animation.util.IAnimation;
 import bettercombat.mod.client.handler.AnimationHandler;
 import bettercombat.mod.client.handler.EventHandlersClient;
-import bettercombat.mod.util.ConfigurationHandler;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.math.MathHelper;
 
 /**
@@ -24,18 +21,8 @@ public class AnimationSweep implements IAnimation {
     }
 
     @Override
-    public void animationCameraMainhand(boolean rightHanded, float swingProgress, float partialTick) {
-        this.animateCamera(rightHanded, swingProgress, partialTick, EventHandlersClient.betterCombatMainhand);
-    }
-
-    @Override
     public void animationOffhand(boolean rightHanded, float swingProgress, float partialTick) {
         this.animateSwing(!rightHanded, swingProgress, partialTick, EventHandlersClient.betterCombatOffhand);
-    }
-
-    @Override
-    public void animationCameraOffhand(boolean rightHanded, float swingProgress, float partialTick) {
-        this.animateCamera(!rightHanded, swingProgress, partialTick, EventHandlersClient.betterCombatOffhand);
     }
 
     @Override
@@ -96,19 +83,13 @@ public class AnimationSweep implements IAnimation {
         GlStateManager.rotate(i * rotateLeft * hand.rotateLeftVariance, 0.0F, 0.0F, 1.0F);
     }
     
-    private void animateCamera(boolean rightHanded, float swingProgress, float partialTick, BetterCombatHand hand) {
-        //Reduce movement with less cooldown
-        float f = (float)hand.attackCooldown / 12.0F;
-        
-        /* Camera */
-        EntityPlayer player = Minecraft.getMinecraft().player;
-        float rotation = MathHelper.cos(0.5F + swingProgress * 2.5F * AnimationHandler.PI);
-        player.cameraPitch += rotation * ConfigurationHandler.client.cameraPitchSwing * f;
-        if(rightHanded) {
-            player.rotationYaw -= rotation * ConfigurationHandler.client.cameraYawSwing * f;
-        }
-        else {
-            player.rotationYaw += rotation * ConfigurationHandler.client.cameraYawSwing * f;
-        }
+    @Override
+    public float getCameraPitchMult() {
+        return 0.5F;
+    }
+    
+    @Override
+    public float getCameraYawMult() {
+        return 1.5F;
     }
 }

@@ -203,12 +203,12 @@ public class ConfigurationHandler {
         @Config.Comment("How much your camera pitch moves when swinging a weapon")
         @Config.Name("Swing Animation Camera Pitch")
         @Config.RangeDouble(min = 0.0F)
-        public float cameraPitchSwing = 0.09F;
+        public float cameraPitchSwing = 1.0F;
 
         @Config.Comment("How much your camera yaw moves when swinging a weapon")
         @Config.Name("Swing Animation Camera Yaw")
         @Config.RangeDouble(min = 0.0F)
-        public float cameraYawSwing = 0.18F;
+        public float cameraYawSwing = 1.0F;
 
         @Config.Comment(
                 "Item classes with custom weapon entries to be used for animations and sounds" + "\n" +

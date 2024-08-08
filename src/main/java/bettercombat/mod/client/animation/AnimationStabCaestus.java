@@ -4,10 +4,7 @@ import bettercombat.mod.client.animation.util.BetterCombatHand;
 import bettercombat.mod.client.animation.util.IAnimation;
 import bettercombat.mod.client.handler.AnimationHandler;
 import bettercombat.mod.client.handler.EventHandlersClient;
-import bettercombat.mod.util.ConfigurationHandler;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.math.MathHelper;
 
 /**
@@ -24,47 +21,11 @@ public class AnimationStabCaestus implements IAnimation {
     }
     
     @Override
-    public void animationCameraMainhand(boolean rightHanded, float swingProgress, float partialTick) {
-        this.animateCamera(rightHanded, swingProgress, partialTick, EventHandlersClient.betterCombatMainhand);
-    }
-    
-    @Override
     public void animationOffhand(boolean rightHanded, float swingProgress, float partialTick) {
         this.animateSwing(!rightHanded, swingProgress, partialTick, EventHandlersClient.betterCombatOffhand);
     }
     
-    @Override
-    public void animationCameraOffhand(boolean rightHanded, float swingProgress, float partialTick) {
-        this.animateCamera(!rightHanded, swingProgress, partialTick, EventHandlersClient.betterCombatOffhand);
-    }
-    
-    @Override
-    public void positionMainhand(boolean rightHanded, float partialTick) {
-        GlStateManager.rotate(-13.0F-AnimationHandler.mainhandSprintingTimer,1.0F,0.0F,0.0F);
-        if(rightHanded) {
-            GlStateManager.rotate(-13.0F,0.0F,1.0F,0.0F);
-            GlStateManager.rotate(-13.0F,0.0F,0.0F,1.0F);
-        }
-        else {
-            GlStateManager.rotate(13.0F,0.0F,1.0F,0.0F);
-            GlStateManager.rotate(13.0F,0.0F,0.0F,1.0F);
-        }
-    }
-    
-    @Override
-    public void positionOffhand(boolean rightHanded, float partialTick) {
-        GlStateManager.rotate(-13.0F-AnimationHandler.offhandSprintingTimer,1.0F,0.0F,0.0F);
-        if(rightHanded) {
-            GlStateManager.rotate(13.0F,0.0F,1.0F,0.0F);
-            GlStateManager.rotate(13.0F,0.0F,0.0F,1.0F);
-        }
-        else {
-            GlStateManager.rotate(-13.0F,0.0F,1.0F,0.0F);
-            GlStateManager.rotate(-13.0F,0.0F,0.0F,1.0F);
-        }
-    }
-    
-    @Override
+	@Override
     public void setActive(BetterCombatHand hand) {
         hand.setSwingTimestampSound(0.3F);
     }
@@ -143,19 +104,13 @@ public class AnimationStabCaestus implements IAnimation {
         GlStateManager.rotate(1.0F * i * rotateLeft * hand.rotateLeftVariance, 0.0F, 0.0F, 1.0F);
     }
     
-    private void animateCamera(boolean rightHanded, float swingProgress, float partialTick, BetterCombatHand hand) {
-        //Reduce movement with less cooldown
-        float f = (float)hand.attackCooldown / 12.0F;
-        
-        /* Camera */
-        EntityPlayer player = Minecraft.getMinecraft().player;
-        float rotation = MathHelper.sin(-0.4F + swingProgress * 2.127323F * AnimationHandler.PI);
-        player.cameraPitch += rotation* ConfigurationHandler.client.cameraPitchSwing * f;
-        if(rightHanded) {
-            player.rotationYaw -= rotation*ConfigurationHandler.client.cameraYawSwing * f;
-        }
-        else {
-            player.rotationYaw += rotation*ConfigurationHandler.client.cameraYawSwing * f;
-        }
+    @Override
+    public float getCameraPitchMult() {
+        return 0.6F;
+    }
+    
+    @Override
+    public float getCameraYawMult() {
+        return 0.2F;
     }
 }

@@ -2,7 +2,6 @@ package bettercombat.mod.client.animation;
 
 import bettercombat.mod.client.animation.util.BetterCombatHand;
 import bettercombat.mod.client.animation.util.IAnimation;
-import bettercombat.mod.client.handler.AnimationHandler;
 import bettercombat.mod.client.handler.EventHandlersClient;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.util.math.MathHelper;
@@ -27,12 +26,16 @@ public class AnimationPunch implements IAnimation {
     
     @Override
     public void positionMainhand(boolean rightHanded, float partialTick) {
-        GlStateManager.rotate(-13.0F-AnimationHandler.mainhandSprintingTimer, 1.0F, 0.0F, 0.0F);
+        GlStateManager.rotate(-13.0F - (EventHandlersClient.betterCombatMainhand.sprintingTimerPrev +
+                (partialTick * (EventHandlersClient.betterCombatMainhand.sprintingTimer - EventHandlersClient.betterCombatMainhand.sprintingTimerPrev))
+        ), 1.0F, 0.0F, 0.0F);
     }
     
     @Override
     public void positionOffhand(boolean rightHanded, float partialTick) {
-        GlStateManager.rotate(-13.0F-AnimationHandler.offhandSprintingTimer,1.0F,0.0F,0.0F);
+        GlStateManager.rotate(-13.0F - (EventHandlersClient.betterCombatOffhand.sprintingTimerPrev +
+                (partialTick * (EventHandlersClient.betterCombatOffhand.sprintingTimer - EventHandlersClient.betterCombatOffhand.sprintingTimerPrev))
+        ),1.0F,0.0F,0.0F);
     }
     
     @Override
