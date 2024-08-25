@@ -1,6 +1,7 @@
 package bettercombat.mod.client.gui;
 
 import bettercombat.mod.capability.CapabilityOffhandCooldown;
+import bettercombat.mod.client.handler.EventHandlersClient;
 import bettercombat.mod.handler.EventHandlers;
 import bettercombat.mod.util.ConfigurationHandler;
 import net.minecraft.block.state.IBlockState;
@@ -14,6 +15,7 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.RayTraceResult;
 
 public class GuiCrosshairsBC extends Gui {
@@ -59,12 +61,10 @@ public class GuiCrosshairsBC extends Gui {
                     
                     if(ConfigurationHandler.isItemAttackUsableOffhand(mc.player.getHeldItemOffhand().getItem())) {
                         CapabilityOffhandCooldown capability = mc.player.getCapability(EventHandlers.OFFHAND_COOLDOWN, null);
-                        float ohCooldown = 0;
+                        float ohCooldown = 0.0F;
                         if(capability != null) {
-                            int ohCooldownBeginning = capability.getOffhandBeginningCooldown();
-                            if(ohCooldownBeginning > 0) ohCooldown = capability.getOffhandCooldown()/(float)ohCooldownBeginning;
+                            ohCooldown = MathHelper.clamp(((float)capability.getTicksSinceLastSwing()) / EventHandlersClient.cachedOffhandCooldownPeriod, 0.0F, 1.0F);
                         }
-                        ohCooldown = Math.abs(1.0F - ohCooldown);
                         
                         boolean fullyCooledIcon = false;
                         if(mc.pointedEntity instanceof EntityLivingBase && cooledStr >= 1.0F && ohCooldown >= 1.0F) {

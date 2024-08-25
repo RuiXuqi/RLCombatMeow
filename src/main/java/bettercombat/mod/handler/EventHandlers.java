@@ -45,10 +45,8 @@ public class EventHandlers {
             CapabilityOffhandCooldown cof = player.getCapability(OFFHAND_COOLDOWN, null);
 
             if(cof != null) {
-                if(cof.getOffhandCooldown() > 0 || cof.getOffhandBeginningCooldown() > 0) {
-                    cof.tick();
-                    //if(!player.world.isRemote) cof.sync();//Sync in Helpers when its initially set, not here, hopefully works with less packet spam?
-                }
+                cof.tick();
+                //if(!player.world.isRemote) cof.sync();//Sync in Helpers when its initially set, not here, hopefully works with less packet spam?
             }
         }
     }

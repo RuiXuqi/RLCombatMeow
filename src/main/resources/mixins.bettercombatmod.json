@@ -9,6 +9,7 @@
     "EnchantmentHelperMixin",
     "EntityLivingBaseMixin",
     "EntityPlayerMixin",
+    "EntityPlayerMPMixin",
     "IEntityLivingBaseMixin"
   ],
   "injectors": {

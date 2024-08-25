@@ -6,34 +6,31 @@ import bettercombat.mod.network.PacketOffhandCooldown;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.nbt.NBTBase;
-import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.EnumFacing;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.CapabilityManager;
 import net.minecraftforge.common.capabilities.ICapabilityProvider;
-import net.minecraftforge.common.util.INBTSerializable;
 
 import javax.annotation.Nonnull;
 import java.util.concurrent.Callable;
 
-public class CapabilityOffhandCooldown implements ICapabilityProvider, INBTSerializable<NBTTagCompound> {
+public class CapabilityOffhandCooldown implements ICapabilityProvider {
 
-    private int offhandCooldown;
-    private int offhandBeginningCooldown;
+    private int ticksSinceLastSwing;
     private final EntityPlayer player;
 
     public CapabilityOffhandCooldown(@Nonnull EntityPlayer player) {
-        this.offhandCooldown = 0;
-        this.offhandBeginningCooldown = 0;
+        this.ticksSinceLastSwing = 0;
         this.player = player;
     }
 
     public void sync() {
-        PacketOffhandCooldown packet = new PacketOffhandCooldown(this.offhandCooldown, this.offhandBeginningCooldown);
+        PacketOffhandCooldown packet = new PacketOffhandCooldown();
         if(!this.player.world.isRemote) {
             EntityPlayerMP playerMP = (EntityPlayerMP) this.player;
             PacketHandler.instance.sendTo(packet, playerMP);
-        } else {
+        }
+        else {
             PacketHandler.instance.sendToServer(packet);
         }
     }
@@ -49,42 +46,16 @@ public class CapabilityOffhandCooldown implements ICapabilityProvider, INBTSeria
         return capability != null && capability == EventHandlers.OFFHAND_COOLDOWN ? (T) this : null;
     }
 
-    @Override
-    public NBTTagCompound serializeNBT() {
-        NBTTagCompound compound = new NBTTagCompound();
-        compound.setInteger("offhandCooldown", this.offhandCooldown);
-        compound.setInteger("offhandBeginningCooldown", this.offhandBeginningCooldown);
-        return compound;
-    }
-
-    @Override
-    public void deserializeNBT(NBTTagCompound compound) {
-        this.offhandCooldown = compound.getInteger("offhandCooldown");
-        this.offhandBeginningCooldown = compound.getInteger("offhandBeginningCooldown");
-    }
-
     public void tick() {
-        if(this.offhandCooldown > 0) this.offhandCooldown -= 1;
-        if(this.offhandCooldown <= 0) {
-            this.offhandCooldown = 0;
-            this.offhandBeginningCooldown = 0;
-        }
+        this.ticksSinceLastSwing++;
     }
-
-    public void setOffhandCooldown(int in) {
-        this.offhandCooldown = in;
+    
+    public void resetTicksSinceLastSwing() {
+        this.ticksSinceLastSwing = 0;
     }
-
-    public int getOffhandCooldown() {
-        return this.offhandCooldown;
-    }
-
-    public void setOffhandBeginningCooldown(int in) {
-        this.offhandBeginningCooldown = in;
-    }
-
-    public int getOffhandBeginningCooldown() {
-        return this.offhandBeginningCooldown;
+    
+    public int getTicksSinceLastSwing() {
+        return this.ticksSinceLastSwing;
     }
 
     public static void register() {

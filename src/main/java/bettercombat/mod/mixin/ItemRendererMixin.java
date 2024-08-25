@@ -333,10 +333,7 @@ public abstract class ItemRendererMixin {
 		if(val == 1) {
 			CapabilityOffhandCooldown capability = this.mc.player.getCapability(EventHandlers.OFFHAND_COOLDOWN, null);
 			if(capability != null) {
-				float ohCooldown = 0;
-				int ohCooldownBeginning = capability.getOffhandBeginningCooldown();
-				if(ohCooldownBeginning > 0) ohCooldown = capability.getOffhandCooldown()/(float)ohCooldownBeginning;
-				val = Math.abs(1.0F - ohCooldown);
+				val = MathHelper.clamp(((float)capability.getTicksSinceLastSwing() + 1.0F) / EventHandlersClient.cachedOffhandCooldownPeriod, 0.0F, 1.0F);
 				return MathHelper.clamp((val * val * val) - this.equippedProgressOffHand, -0.4F, 0.4F);
 			}
 		}

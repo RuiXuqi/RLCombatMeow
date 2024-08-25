@@ -47,6 +47,8 @@ public class EventHandlersClient {
     
     public final static BetterCombatHand betterCombatMainhand = new BetterCombatHand();
     public final static BetterCombatHand betterCombatOffhand = new BetterCombatHand();
+    
+    public static float cachedOffhandCooldownPeriod = 1.0F;
 
     @SubscribeEvent(priority = EventPriority.NORMAL, receiveCanceled = true)
     public void onMouseEvent(MouseEvent event) {
@@ -95,7 +97,7 @@ public class EventHandlersClient {
         if(mov != null && mov.entityHit != null && mov.entityHit != player) {
             event.setCanceled(true);
             
-            if(ConfigurationHandler.server.requireFullEnergy && player.getCooledAttackStrength(0.5F) < 1.0F) return;
+            if(ConfigurationHandler.server.requireFullEnergy && player.getCooledAttackStrength(0.5F) < 0.95F) return;
             
             if(ModLoadedUtil.isIceAndFireLoaded() && InFHandler.isMultipart(mov.entityHit)) {
                 mov.entityHit = InFHandler.getMultipartParent(mov.entityHit);
@@ -108,13 +110,13 @@ public class EventHandlersClient {
             player.resetCooldown();
             
             player.swingArm(EnumHand.MAIN_HAND);
-            resetMainhandAnimationCooldown(Helpers.getCooldownAttributeTimer(player));
+            resetMainhandAnimationCooldown(player.getCooldownPeriod());
             betterCombatMainhand.initiateAnimation();
         }
         else if(mov == null || mov.typeOfHit == RayTraceResult.Type.MISS) {
-            if(ConfigurationHandler.server.requireFullEnergy && player.getCooledAttackStrength(0.5F) < 1.0F) return;
+            if(ConfigurationHandler.server.requireFullEnergy && player.getCooledAttackStrength(0.5F) < 0.95F) return;
             
-            resetMainhandAnimationCooldown(Helpers.getCooldownAttributeTimer(player));
+            resetMainhandAnimationCooldown(player.getCooldownPeriod());
             betterCombatMainhand.initiateAnimation();
         }
     }
@@ -130,13 +132,12 @@ public class EventHandlersClient {
         if(!player.getActiveItemStack().isEmpty()) return;
         //Don't allow shield spamming with an offhand weapon
         if(player.getHeldItemMainhand().getItem() instanceof ItemShield) return;
-        if(ConfigurationHandler.server.requireFullEnergy && Helpers.execNullable(player.getCapability(EventHandlers.OFFHAND_COOLDOWN, null), CapabilityOffhandCooldown::getOffhandCooldown, 1) > 0) return;
         
         ItemStack stackOffHand = player.getHeldItemOffhand();
         if(stackOffHand.isEmpty() || !ConfigurationHandler.isItemAttackUsableOffhand(stackOffHand.getItem())) return;
         
-        Helpers.clearOldModifiers(player, player.getHeldItemMainhand());
-        Helpers.addNewModifiers(player, player.getHeldItemOffhand());
+        Helpers.clearOldModifiers(player, player.getHeldItemMainhand(), false, true, true);
+        Helpers.addNewModifiers(player, player.getHeldItemOffhand(), false, true, true);
         
         RayTraceResult mov = null;
         if(ConfigurationHandler.server.swingThroughPassableBlocks) {
@@ -146,10 +147,18 @@ public class EventHandlersClient {
         //If swing through check finds an entity, use that, otherwise use the normal check to not count a passable block hit as a miss
         if(mov == null) mov = ReachFixUtil.pointedObject(rvEntity, player, EnumHand.OFF_HAND, mc.world, mc.getRenderPartialTicks());
         
-        int cooldown = Helpers.getCooldownAttributeTimer(player);
+        float cooldown = player.getCooldownPeriod();
         
-        Helpers.clearOldModifiers(player, player.getHeldItemOffhand());
-        Helpers.addNewModifiers(player, player.getHeldItemMainhand());
+        Helpers.clearOldModifiers(player, player.getHeldItemOffhand(), false, true, true);
+        Helpers.addNewModifiers(player, player.getHeldItemMainhand(), false, true, true);
+        
+        if(ConfigurationHandler.server.requireFullEnergy) {
+            CapabilityOffhandCooldown capability = player.getCapability(EventHandlers.OFFHAND_COOLDOWN, null);
+            if(capability != null) {
+                float val = MathHelper.clamp(((float)capability.getTicksSinceLastSwing() + 0.5F) / cooldown, 0.0F, 1.0F);
+                if(val < 0.95F) return;
+            }
+        }
         
         if(mov != null && mov.entityHit != null && mov.entityHit != player) {
             if(ModLoadedUtil.isIceAndFireLoaded() && InFHandler.isMultipart(mov.entityHit)) {
@@ -170,8 +179,7 @@ public class EventHandlersClient {
         else if((mov == null || mov.typeOfHit == RayTraceResult.Type.MISS) && player.getHeldItemMainhand().getItem().getItemUseAction(player.getHeldItemMainhand()) == EnumAction.NONE) {
             CapabilityOffhandCooldown coh = player.getCapability(EventHandlers.OFFHAND_COOLDOWN, null);
             if(coh != null) {
-                coh.setOffhandCooldown(cooldown);
-                coh.setOffhandBeginningCooldown(cooldown);
+                coh.resetTicksSinceLastSwing();
                 coh.sync();
                 
                 player.swingArm(EnumHand.OFF_HAND);
@@ -202,6 +210,15 @@ public class EventHandlersClient {
             }
 
             checkItemstacksChanged();
+            
+            Helpers.clearOldModifiers(mc.player, mc.player.getHeldItemMainhand(), false, true, false);
+            Helpers.addNewModifiers(mc.player, mc.player.getHeldItemOffhand(), false, true, false);
+            
+            //Don't like having to do this every tick but otherwise cooldown animation and bar will not be correct if values are changed after a swing
+            cachedOffhandCooldownPeriod = mc.player.getCooldownPeriod();
+            
+            Helpers.clearOldModifiers(mc.player, mc.player.getHeldItemOffhand(), false, true, false);
+            Helpers.addNewModifiers(mc.player, mc.player.getHeldItemMainhand(), false, true, false);
 
             //Wall-aware positioning, only bother raytracing if enabled
             boolean close = false;
@@ -296,7 +313,7 @@ public class EventHandlersClient {
             }
             
             itemStackMainhand = heldStack;
-            resetMainhandAnimationCooldown(Helpers.getCooldownAttributeTimer(player));
+            resetMainhandAnimationCooldown(player.getCooldownPeriod());
             betterCombatMainhand.resetBetterCombatWeapon();
             
             CustomWeapon weapon = ConfigurationHandler.getCustomWeapon(itemStackMainhand.getItem());
@@ -330,13 +347,13 @@ public class EventHandlersClient {
             
             itemStackOffhand = heldStack;
             
-            Helpers.clearOldModifiers(player, player.getHeldItemMainhand());
-            Helpers.addNewModifiers(player, player.getHeldItemOffhand());
+            Helpers.clearOldModifiers(player, player.getHeldItemMainhand(), false, true, false);
+            Helpers.addNewModifiers(player, player.getHeldItemOffhand(), false, true, false);
             
-            resetOffhandAnimationCooldown(Helpers.getCooldownAttributeTimer(player));
+            resetOffhandAnimationCooldown(player.getCooldownPeriod());
             
-            Helpers.clearOldModifiers(player, player.getHeldItemOffhand());
-            Helpers.addNewModifiers(player, player.getHeldItemMainhand());
+            Helpers.clearOldModifiers(player, player.getHeldItemOffhand(), false, true, false);
+            Helpers.addNewModifiers(player, player.getHeldItemMainhand(), false, true, false);
             
             betterCombatOffhand.resetBetterCombatWeapon();
             
@@ -355,12 +372,12 @@ public class EventHandlersClient {
         else if(betterCombatMainhand.equipSoundTimer == -1) betterCombatMainhand.equipSoundTimer = 0;
     }
 
-    public static void resetMainhandAnimationCooldown(int cooldown) {
-        betterCombatMainhand.attackCooldown = MathHelper.clamp(cooldown, BetterCombatHand.minimumCooldownTicks, BetterCombatHand.maximumCooldownTicks);
+    public static void resetMainhandAnimationCooldown(float cooldown) {
+        betterCombatMainhand.attackCooldown = (int)MathHelper.clamp(cooldown, BetterCombatHand.minimumCooldownTicks, BetterCombatHand.maximumCooldownTicks);
     }
 
-    public static void resetOffhandAnimationCooldown(int cooldown) {
-        betterCombatOffhand.attackCooldown = MathHelper.clamp(cooldown, BetterCombatHand.minimumCooldownTicks, BetterCombatHand.maximumCooldownTicks);
+    public static void resetOffhandAnimationCooldown(float cooldown) {
+        betterCombatOffhand.attackCooldown = (int)MathHelper.clamp(cooldown, BetterCombatHand.minimumCooldownTicks, BetterCombatHand.maximumCooldownTicks);
     }
 
     public static void mainhandSwingSound() {

@@ -12,34 +12,25 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 
 public class PacketOffhandCooldown implements IMessage {
 
-    public int cooldown;
-    public int cooldownBeginning;
-
-    public PacketOffhandCooldown(int cooldown, int cooldownBeginning) {
-        this.cooldown = cooldown;
-        this.cooldownBeginning = cooldownBeginning;
+    public PacketOffhandCooldown() {
+    
     }
-
-    @SuppressWarnings("unused")
-    public PacketOffhandCooldown() { }
 
     @Override
     public void fromBytes(ByteBuf buf) {
-        this.cooldown = buf.readInt();
-        this.cooldownBeginning = buf.readInt();
+    
     }
 
     @Override
     public void toBytes(ByteBuf buf) {
-        buf.writeInt(this.cooldown);
-        buf.writeInt(this.cooldownBeginning);
+    
     }
 
     public static class ServerHandler implements IMessageHandler<PacketOffhandCooldown, IMessage> {
 
         @Override
         public IMessage onMessage(PacketOffhandCooldown message, MessageContext ctx) {
-            FMLCommonHandler.instance().getWorldThread(ctx.netHandler).addScheduledTask(new ScheduledPacketTask(ctx.getServerHandler().player, message));
+            FMLCommonHandler.instance().getWorldThread(ctx.netHandler).addScheduledTask(new ScheduledPacketTask(ctx.getServerHandler().player));
             return null;
         }
     }
@@ -49,7 +40,7 @@ public class PacketOffhandCooldown implements IMessage {
 
         @Override
         public IMessage onMessage(PacketOffhandCooldown message, MessageContext ctx) {
-            Minecraft.getMinecraft().addScheduledTask(new ScheduledPacketTask(Minecraft.getMinecraft().player, message));
+            Minecraft.getMinecraft().addScheduledTask(new ScheduledPacketTask(Minecraft.getMinecraft().player));
             return null;
         }
     }

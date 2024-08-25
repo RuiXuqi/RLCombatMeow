@@ -6,7 +6,6 @@
  *******************************************************************************************************************/
 package bettercombat.mod.util;
 
-import bettercombat.mod.capability.CapabilityOffhandHurtResistance;
 import bettercombat.mod.compat.*;
 import bettercombat.mod.event.RLCombatCriticalHitEvent;
 import bettercombat.mod.event.RLCombatModifyDamageEvent;
@@ -14,7 +13,6 @@ import bettercombat.mod.event.RLCombatSweepEvent;
 import bettercombat.mod.handler.EventHandlers;
 import bettercombat.mod.capability.CapabilityOffhandCooldown;
 import bettercombat.mod.handler.SoundHandler;
-import bettercombat.mod.mixin.IEntityLivingBaseMixin;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import meldexun.reachfix.util.ReachFixUtil;
@@ -50,7 +48,6 @@ import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.ForgeEventFactory;
 import net.minecraftforge.event.entity.player.AttackEntityEvent;
 import net.minecraftforge.fml.common.eventhandler.Event;
-import org.apache.logging.log4j.Level;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -69,47 +66,44 @@ public final class Helpers {
         return orElse;
     }
 
-    public static void clearOldModifiers(EntityLivingBase entity, ItemStack stack) {
+    public static void clearOldModifiers(EntityLivingBase entity, ItemStack stack, boolean damage, boolean speed, boolean reach) {
         if(!stack.isEmpty() && entity != null) {
             Multimap<String, AttributeModifier> modifiersToRemove = HashMultimap.create();
             for(Map.Entry<String, AttributeModifier> modifier : stack.getAttributeModifiers(EntityEquipmentSlot.MAINHAND).entries()) {
-                if(modifier.getKey().contains("attackDamage") || modifier.getKey().contains("attackSpeed") || modifier.getKey().contains("reachDistance")) {
+                if((damage && modifier.getKey().equals(SharedMonsterAttributes.ATTACK_DAMAGE.getName())) ||
+                        (speed && modifier.getKey().equals(SharedMonsterAttributes.ATTACK_SPEED.getName())) ||
+                        (reach && modifier.getKey().equals(EntityPlayer.REACH_DISTANCE.getName()))) {
                     modifiersToRemove.put(modifier.getKey(), modifier.getValue());
                 }
             }
-            if(ModLoadedUtil.isQualityToolsLoaded()) QualityToolsHandler.clearOldModifiersQualityTools(entity, stack, modifiersToRemove);
+            if(ModLoadedUtil.isQualityToolsLoaded()) QualityToolsHandler.clearOldModifiersQualityTools(entity, stack, modifiersToRemove, damage, speed, reach);
             if(!modifiersToRemove.isEmpty()) entity.getAttributeMap().removeAttributeModifiers(modifiersToRemove);
         }
     }
 
-    public static void addNewModifiers(EntityLivingBase entity, ItemStack stack) {
+    public static void addNewModifiers(EntityLivingBase entity, ItemStack stack, boolean damage, boolean speed, boolean reach) {
         if(!stack.isEmpty() && entity != null) {
             for(Map.Entry<String, AttributeModifier> modifier : stack.getAttributeModifiers(EntityEquipmentSlot.MAINHAND).entries()) {
-                if(modifier.getKey().contains("attackDamage") ) {
+                if(damage && modifier.getKey().equals(SharedMonsterAttributes.ATTACK_DAMAGE.getName())) {
                     IAttributeInstance entityAttribute = entity.getAttributeMap().getAttributeInstance(SharedMonsterAttributes.ATTACK_DAMAGE);
                     if(!entityAttribute.hasModifier(modifier.getValue())) entityAttribute.applyModifier(modifier.getValue());
                 }
-                else if(modifier.getKey().contains("attackSpeed") ) {
+                else if(speed && modifier.getKey().equals(SharedMonsterAttributes.ATTACK_SPEED.getName())) {
                     IAttributeInstance entityAttribute = entity.getAttributeMap().getAttributeInstance(SharedMonsterAttributes.ATTACK_SPEED);
                     if(!entityAttribute.hasModifier(modifier.getValue())) entityAttribute.applyModifier(modifier.getValue());
                 }
-                else if(modifier.getKey().contains("reachDistance") ) {
+                else if(reach && modifier.getKey().equals(EntityPlayer.REACH_DISTANCE.getName())) {
                     IAttributeInstance entityAttribute = entity.getAttributeMap().getAttributeInstance(EntityPlayer.REACH_DISTANCE);
                     if(!entityAttribute.hasModifier(modifier.getValue())) entityAttribute.applyModifier(modifier.getValue());
                 }
             }
-            if(ModLoadedUtil.isQualityToolsLoaded()) QualityToolsHandler.addNewModifiersQualityTools(entity, stack);
+            if(ModLoadedUtil.isQualityToolsLoaded()) QualityToolsHandler.addNewModifiersQualityTools(entity, stack, damage, speed, reach);
         }
     }
 
     public static float getOffhandDamage(EntityPlayer player) {
         float attack = (float)player.getEntityAttribute(SharedMonsterAttributes.ATTACK_DAMAGE).getAttributeValue();
         return attack * (ConfigurationHandler.server.weakerOffhand ? ConfigurationHandler.server.offhandEfficiency : 1.0F);
-    }
-    
-    public static int getCooldownAttributeTimer(EntityPlayer player) {
-        float speed = (float)player.getEntityAttribute(SharedMonsterAttributes.ATTACK_SPEED).getAttributeValue();
-        return (int) (((1.0F/speed)*20.0F)+0.5F);
     }
 
     public static boolean isHandActive(EntityPlayer player, EnumHand hand) {
@@ -127,19 +121,19 @@ public final class Helpers {
         if(targetEntity.canBeAttackedWithItem()) {
             if(!targetEntity.hitByEntity(player)) {
                 float damage;
-                int cooldown = 0;
+                float cooldown = 0.0F;
                 double reach;
 
                 if(offhand) {
-                    clearOldModifiers(player, player.getHeldItemMainhand());
-                    addNewModifiers(player, player.getHeldItemOffhand());
+                    clearOldModifiers(player, player.getHeldItemMainhand(), true, true, true);
+                    addNewModifiers(player, player.getHeldItemOffhand(), true, true, true);
 
                     damage = getOffhandDamage(player);
-                    cooldown = getCooldownAttributeTimer(player);
+                    cooldown = player.getCooldownPeriod();
                     reach = ReachFixUtil.getEntityReach(player, EnumHand.OFF_HAND);
 
-                    clearOldModifiers(player, player.getHeldItemOffhand());
-                    addNewModifiers(player, player.getHeldItemMainhand());
+                    clearOldModifiers(player, player.getHeldItemOffhand(), true, true, true);
+                    addNewModifiers(player, player.getHeldItemMainhand(), true, true, true);
                 }
                 else {
                     damage = (float)player.getEntityAttribute(SharedMonsterAttributes.ATTACK_DAMAGE).getAttributeValue();
@@ -154,14 +148,15 @@ public final class Helpers {
                     cMod = EnchantmentHelper.getModifierForCreature(weapon, EnumCreatureAttribute.UNDEFINED);
                 }
 
-                float cooledStr;
+                float cooledStr = 0.0F;
                 if(offhand) {
-                    if(cooldown > 0) cooledStr = 1.0F - Helpers.execNullable(player.getCapability(EventHandlers.OFFHAND_COOLDOWN, null), CapabilityOffhandCooldown::getOffhandCooldown, 0) / (float) cooldown;
-                    else cooledStr = 1.0F;
+                    CapabilityOffhandCooldown coh = player.getCapability(EventHandlers.OFFHAND_COOLDOWN, null);
+                    if(coh != null) cooledStr = MathHelper.clamp(((float)coh.getTicksSinceLastSwing() + 0.5F) / cooldown, 0.0F, 1.0F);
                 }
                 else {
                     cooledStr = player.getCooledAttackStrength(0.5F);
                 }
+                boolean cancelCooldown = ConfigurationHandler.server.requireFullEnergy && cooledStr < 0.95F;
 
                 //Post event to get any other modifiers before multiplying by cooldown and adding enchantment damage
                 RLCombatModifyDamageEvent modifyResultPre = new RLCombatModifyDamageEvent.Pre(player, targetEntity, offhand, weapon, damage, cooledStr, motionX, motionY, motionZ);
@@ -174,8 +169,7 @@ public final class Helpers {
                 if(offhand) {
                     CapabilityOffhandCooldown coh = player.getCapability(EventHandlers.OFFHAND_COOLDOWN, null);
                     if(coh != null) {
-                        coh.setOffhandCooldown(cooldown);
-                        coh.setOffhandBeginningCooldown(cooldown);
+                        coh.resetTicksSinceLastSwing();
                         if(!player.world.isRemote) coh.sync();//Sync once here, instead of every tick that there is a cooldown in livingupdate, hopefully works fine?
                     }
                 }
@@ -184,7 +178,7 @@ public final class Helpers {
                 }
                 
                 //Cancel after cooldowns for consistency, as mainhand cooldown will still get reset from arm swinging handling
-                if(cancelPre) return;
+                if(cancelCooldown || cancelPre) return;
 
                 if(damage > 0.0F || cMod > 0.0F) {
                     boolean isStrong = cooledStr > 0.9F;

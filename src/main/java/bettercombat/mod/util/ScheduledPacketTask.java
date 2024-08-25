@@ -1,24 +1,20 @@
 package bettercombat.mod.util;
 
+import bettercombat.mod.capability.CapabilityOffhandCooldown;
 import bettercombat.mod.handler.EventHandlers;
-import bettercombat.mod.network.PacketOffhandCooldown;
 import net.minecraft.entity.player.EntityPlayer;
 
 public class ScheduledPacketTask implements Runnable {
 
     private final EntityPlayer player;
-    private final PacketOffhandCooldown message;
-
-    public ScheduledPacketTask(EntityPlayer player, PacketOffhandCooldown message) {
+    
+    public ScheduledPacketTask(EntityPlayer player) {
         this.player = player;
-        this.message = message;
     }
 
     @Override
     public void run() {
         if(this.player == null) return;
-
-        Helpers.execNullable(this.player.getCapability(EventHandlers.OFFHAND_COOLDOWN, null), stg -> stg.setOffhandCooldown(this.message.cooldown));
-        Helpers.execNullable(this.player.getCapability(EventHandlers.OFFHAND_COOLDOWN, null), stg -> stg.setOffhandBeginningCooldown(this.message.cooldownBeginning));
+        Helpers.execNullable(this.player.getCapability(EventHandlers.OFFHAND_COOLDOWN, null), CapabilityOffhandCooldown::resetTicksSinceLastSwing);
     }
 }
