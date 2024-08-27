@@ -267,6 +267,10 @@ public final class Helpers {
                     }
                     else {
                         attacked = targetEntity.attackEntityFrom(dmgSource, damage);
+                        
+                        if(attacked && ModLoadedUtil.isSpartanWeaponryLoaded()) {
+                            SpartanWeaponryHandler.handleSpartanQuickStrike(weapon, targetEntity);
+                        }
                     }
                     EnchantCompatHandler.lootingFromOffhand = false;
                     
@@ -304,7 +308,11 @@ public final class Helpers {
                                                      sht -> sht.attackEntityFromOffhand(living, sweepingDamageSource, sweepingDamage));
                                     }
                                     else {
-                                        living.attackEntityFrom(sweepingDamageSource, sweepingDamage);
+                                        boolean att = living.attackEntityFrom(sweepingDamageSource, sweepingDamage);
+                                        
+                                        if(att && ModLoadedUtil.isSpartanWeaponryLoaded()) {
+                                            SpartanWeaponryHandler.handleSpartanQuickStrike(weapon, targetEntity);
+                                        }
                                     }
                                 }
                             }
@@ -422,10 +430,6 @@ public final class Helpers {
                         if(burnInflicted) {
                             targetEntity.extinguish();
                         }
-                    }
-
-                    if(ModLoadedUtil.isSpartanWeaponryLoaded()){
-                        SpartanWeaponryHandler.handleSpartanQuickStrike(weapon, targetEntity);
                     }
                 }
             }

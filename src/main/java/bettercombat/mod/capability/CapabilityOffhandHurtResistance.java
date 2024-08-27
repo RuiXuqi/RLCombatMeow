@@ -1,5 +1,7 @@
 package bettercombat.mod.capability;
 
+import bettercombat.mod.compat.ModLoadedUtil;
+import bettercombat.mod.compat.SpartanWeaponryHandler;
 import bettercombat.mod.handler.EventHandlers;
 import bettercombat.mod.mixin.IEntityLivingBaseMixin;
 import net.minecraft.entity.Entity;
@@ -72,6 +74,10 @@ public class CapabilityOffhandHurtResistance implements ICapabilityProvider {
 		
 		//Attack non-cast, incase its multipart like the ender dragon
 		boolean successfulAttack = target.attackEntityFrom(dmgSrc, amount);
+		
+		if(successfulAttack && ModLoadedUtil.isSpartanWeaponryLoaded()) {
+			SpartanWeaponryHandler.handleSpartanQuickStrike(attacker.getHeldItemMainhand(), target);
+		}
 		
 		//Swap the values back and use the new values for offhand set through attackEntityFrom
 		this.hurtResistantTimeOffhand = targetMain.hurtResistantTime;
