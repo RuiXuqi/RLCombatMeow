@@ -1,4 +1,4 @@
-package bettercombat.mod.compat.inf;
+package bettercombat.mod.util.inf;
 
 import com.github.alexthe666.iceandfire.entity.util.EntityMultipartPart;
 import net.minecraft.entity.Entity;
