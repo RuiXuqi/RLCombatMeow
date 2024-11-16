@@ -12,7 +12,7 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 /**
  * Make enchantment checks hand-sensitive
  */
-@Mixin(EnchantmentHelper.class)
+@Mixin(value = EnchantmentHelper.class, priority = 2000)
 public abstract class EnchantmentHelperMixin {
 	
 	@Redirect(
