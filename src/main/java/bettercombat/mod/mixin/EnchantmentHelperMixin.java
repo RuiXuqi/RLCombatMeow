@@ -16,6 +16,15 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 public abstract class EnchantmentHelperMixin {
 	
 	@Redirect(
+			method = "getSweepingDamageRatio",
+			at = @At(value = "INVOKE", target = "Lnet/minecraft/enchantment/EnchantmentHelper;getMaxEnchantmentLevel(Lnet/minecraft/enchantment/Enchantment;Lnet/minecraft/entity/EntityLivingBase;)I")
+	)
+	private static int rlcombat_vanillaEnchantmentHelper_getSweepingDamageRatio(Enchantment j, EntityLivingBase entity) {
+		if(EnchantCompatHandler.sweepingFromOffhand) return EnchantmentHelper.getEnchantmentLevel(j, entity.getHeldItemOffhand());
+		return EnchantmentHelper.getEnchantmentLevel(j, entity.getHeldItemMainhand());
+	}
+	
+	@Redirect(
 			method = "applyThornEnchantments",
 			at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/EntityLivingBase;getHeldItemMainhand()Lnet/minecraft/item/ItemStack;")
 	)
@@ -65,7 +74,6 @@ public abstract class EnchantmentHelperMixin {
 			at = @At(value = "INVOKE", target = "Lnet/minecraft/enchantment/EnchantmentHelper;getMaxEnchantmentLevel(Lnet/minecraft/enchantment/Enchantment;Lnet/minecraft/entity/EntityLivingBase;)I")
 	)
 	private static int rlcombat_vanillaEnchantmentHelper_getLootingModifier(Enchantment j, EntityLivingBase entity) {
-		if(EnchantCompatHandler.lootingFromOffhand) return EnchantmentHelper.getEnchantmentLevel(j, entity.getHeldItemOffhand());
 		return EnchantmentHelper.getEnchantmentLevel(j, entity.getHeldItemMainhand());
 	}
 }

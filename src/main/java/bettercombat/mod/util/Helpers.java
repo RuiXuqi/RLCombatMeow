@@ -7,6 +7,7 @@
 package bettercombat.mod.util;
 
 import bettercombat.mod.compat.*;
+import bettercombat.mod.event.RLCombatAttackEntityEvent;
 import bettercombat.mod.event.RLCombatCriticalHitEvent;
 import bettercombat.mod.event.RLCombatModifyDamageEvent;
 import bettercombat.mod.event.RLCombatSweepEvent;
@@ -17,7 +18,6 @@ import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import meldexun.reachfix.util.ReachFixUtil;
 import net.minecraft.enchantment.EnchantmentHelper;
-import net.minecraft.enchantment.EnchantmentSweepingEdge;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.EnumCreatureAttribute;
@@ -28,7 +28,6 @@ import net.minecraft.entity.ai.attributes.AttributeModifier;
 import net.minecraft.entity.ai.attributes.IAttributeInstance;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.init.Enchantments;
 import net.minecraft.init.MobEffects;
 import net.minecraft.init.SoundEvents;
 import net.minecraft.inventory.EntityEquipmentSlot;
@@ -46,7 +45,6 @@ import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.WorldServer;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.ForgeEventFactory;
-import net.minecraftforge.event.entity.player.AttackEntityEvent;
 import net.minecraftforge.fml.common.eventhandler.Event;
 
 import javax.annotation.Nonnull;
@@ -112,7 +110,8 @@ public final class Helpers {
 
     public static void attackTargetEntityItem(EntityPlayer player, Entity targetEntity, boolean offhand, double motionX, double motionY, double motionZ) {
         ItemStack weapon = offhand ? player.getHeldItemOffhand() : player.getHeldItemMainhand();
-        if(MinecraftForge.EVENT_BUS.post(new AttackEntityEvent(player, targetEntity))) return;
+        boolean attackEntityEventCancel = MinecraftForge.EVENT_BUS.post(new RLCombatAttackEntityEvent(player, targetEntity, offhand));
+        if(attackEntityEventCancel) return;
         if(!weapon.isEmpty() && weapon.getItem().onLeftClickEntity(weapon, player, targetEntity)) return;
 
         //Check for a Reskillable lock ourselves, since reskillable normally only blocks it *after* this handling is ran
@@ -184,14 +183,18 @@ public final class Helpers {
                     boolean isStrong = cooledStr > 0.9F;
                     boolean knockback = false;
                     boolean isCrit;
-                    //Hacky compat for enchantment mods like SME to avoid stacktrace checking
+                    
                     EnchantCompatHandler.knockbackFromOffhand = offhand;
+                    EnchantCompatHandler.knockbackCooledStrength = cooledStr;
                     int knockbackMod = EnchantmentHelper.getKnockbackModifier(player);
                     EnchantCompatHandler.knockbackFromOffhand = false;
-                    //Hacky compat for enchantment mods like SME to avoid stacktrace checking
+                    EnchantCompatHandler.knockbackCooledStrength = 1.0F;
+                    
                     EnchantCompatHandler.fireAspectFromOffhand = offhand;
+                    EnchantCompatHandler.fireAspectCooledStrength = cooledStr;
                     int fireAspect = EnchantmentHelper.getFireAspectModifier(player);
                     EnchantCompatHandler.fireAspectFromOffhand = false;
+                    EnchantCompatHandler.fireAspectCooledStrength = 1.0F;
 
                     if(player.isSprinting() && isStrong) {
                         player.world.playSound(null, player.posX, player.posY, player.posZ, SoundEvents.ENTITY_PLAYER_ATTACK_KNOCKBACK, player.getSoundCategory(), 1.0F, 1.0F);
@@ -212,7 +215,7 @@ public final class Helpers {
                                          && !player.isSprinting();
                     }
 
-                    RLCombatCriticalHitEvent hitResult = new RLCombatCriticalHitEvent(player, targetEntity, isCrit ? 1.5F : 1.0F, isCrit, offhand);
+                    RLCombatCriticalHitEvent hitResult = new RLCombatCriticalHitEvent(player, targetEntity, isCrit ? 1.5F : 1.0F, isCrit, offhand, cooledStr);
                     MinecraftForge.EVENT_BUS.post(hitResult);
                     if(!(hitResult.getResult() == Event.Result.ALLOW || (isCrit && hitResult.getResult() == Event.Result.DEFAULT))) hitResult = null;
 
@@ -256,8 +259,6 @@ public final class Helpers {
                     double tgtMotionZ = targetEntity.motionZ;
                     boolean attacked;
                     
-                    //Hacky compat for enchantment mods like SME to avoid stacktrace checking
-                    EnchantCompatHandler.lootingFromOffhand = offhand;
                     if(offhand) {
                         Entity targetEntCap = targetEntity;
                         if(targetEntCap instanceof MultiPartEntityPart) targetEntCap = (Entity)(((MultiPartEntityPart)targetEntCap).parent);
@@ -272,7 +273,6 @@ public final class Helpers {
                             SpartanWeaponryHandler.handleSpartanQuickStrike(weapon, targetEntity);
                         }
                     }
-                    EnchantCompatHandler.lootingFromOffhand = false;
                     
                     if(attacked) {
                         if(knockbackMod > 0) {
@@ -288,8 +288,14 @@ public final class Helpers {
                                 player.setSprinting(false);
                             }
                         }
-
-                        RLCombatSweepEvent sweepResult = new RLCombatSweepEvent(player, targetEntity, damage, offhand, weapon, doSweepingIgnoreSword, doSweeping, EnchantmentSweepingEdge.getSweepingDamageRatio(EnchantmentHelper.getEnchantmentLevel(Enchantments.SWEEPING, player.getHeldItem(offhand ? EnumHand.OFF_HAND : EnumHand.MAIN_HAND))), targetEntity.getEntityBoundingBox().grow(1.0D, 0.25D, 1.0D), DamageSource.causePlayerDamage(player));
+                        
+                        EnchantCompatHandler.sweepingFromOffhand = offhand;
+                        EnchantCompatHandler.sweepingCooledStrength = cooledStr;
+                        float sweepingRatio = EnchantmentHelper.getSweepingDamageRatio(player);
+                        EnchantCompatHandler.sweepingFromOffhand = false;
+                        EnchantCompatHandler.sweepingCooledStrength = 1.0F;
+                        
+                        RLCombatSweepEvent sweepResult = new RLCombatSweepEvent(player, targetEntity, damage, offhand, weapon, doSweepingIgnoreSword, doSweeping, sweepingRatio, targetEntity.getEntityBoundingBox().grow(1.0D, 0.25D, 1.0D), DamageSource.causePlayerDamage(player), cooledStr);
                         MinecraftForge.EVENT_BUS.post(sweepResult);
                         doSweeping = sweepResult.getDoSweep();
 
@@ -298,8 +304,6 @@ public final class Helpers {
                             AxisAlignedBB sweepingAABB = sweepResult.getSweepingAABB();
                             DamageSource sweepingDamageSource = sweepResult.getSweepingDamageSource();
                             
-                            //Hacky compat for enchantment mods like SME to avoid stacktrace checking
-                            EnchantCompatHandler.lootingFromOffhand = offhand;
                             for(EntityLivingBase living : player.world.getEntitiesWithinAABB(EntityLivingBase.class, sweepingAABB)) {
                                 if(living != player && living != targetEntity && !player.isOnSameTeam(living) && player.getDistanceSq(living) < (reach * reach)) {
                                     living.knockBack(player, 0.4F, MathHelper.sin(player.rotationYaw * 0.017453292F), -MathHelper.cos(player.rotationYaw * 0.017453292F));
@@ -316,7 +320,6 @@ public final class Helpers {
                                     }
                                 }
                             }
-                            EnchantCompatHandler.lootingFromOffhand = false;
                             player.world.playSound(null, player.posX, player.posY, player.posZ, SoundEvents.ENTITY_PLAYER_ATTACK_SWEEP, player.getSoundCategory(), 1.0F, 1.0F);
                             player.spawnSweepParticles();
                         }
@@ -362,9 +365,13 @@ public final class Helpers {
                             EntityPlayer entityplayer = (EntityPlayer)targetEntity;
                             ItemStack activeItem = entityplayer.isHandActive() ? entityplayer.getActiveItemStack() : ItemStack.EMPTY;
                             if(weapon.getItem() instanceof ItemAxe && activeItem.getItem() instanceof ItemShield) {
+                                
                                 EnchantCompatHandler.efficiencyFromOffhand = offhand;
+                                EnchantCompatHandler.efficiencyCooledStrength = cooledStr;
                                 float efficiency = 0.25F + EnchantmentHelper.getEfficiencyModifier(player) * 0.05F;
                                 EnchantCompatHandler.efficiencyFromOffhand = false;
+                                EnchantCompatHandler.efficiencyCooledStrength = 1.0F;
+                                
                                 if(knockback) {
                                     efficiency += 0.75F;
                                 }
@@ -379,16 +386,18 @@ public final class Helpers {
                         player.setLastAttackedEntity(targetEntity);
 
                         if(targetEntity instanceof EntityLivingBase) {
-                            //Hacky compat for enchantment mods like SME to avoid stacktrace checking
                             EnchantCompatHandler.thornsFromOffhand = offhand;
+                            EnchantCompatHandler.thornsCooledStrength = cooledStr;
                             EnchantmentHelper.applyThornEnchantments((EntityLivingBase)targetEntity, player);
                             EnchantCompatHandler.thornsFromOffhand = false;
+                            EnchantCompatHandler.thornsCooledStrength = 1.0F;
                         }
                         
-                        //Hacky compat for enchantment mods like SME to avoid stacktrace checking
                         EnchantCompatHandler.arthropodFromOffhand = offhand;
+                        EnchantCompatHandler.arthropodCooledStrength = cooledStr;
                         EnchantmentHelper.applyArthropodEnchantments(player, targetEntity);
                         EnchantCompatHandler.arthropodFromOffhand = false;
+                        EnchantCompatHandler.arthropodCooledStrength = 1.0F;
 
                         Entity entity = targetEntity;
 

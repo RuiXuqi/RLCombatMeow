@@ -19,6 +19,7 @@ public class RLCombatSweepEvent extends PlayerEvent {
     private float sweepModifier;
     private AxisAlignedBB sweepingAABB;
     private DamageSource sweepingDamageSource;
+    private final float cooledStrength;
 
     /**
      * Posts before sweeping is attempted, allows cancelling sweeping, changing damage modifier, and sweeping size
@@ -39,7 +40,8 @@ public class RLCombatSweepEvent extends PlayerEvent {
             boolean doSweep,
             float sweepModifier,
             AxisAlignedBB sweepingAABB,
-            DamageSource sweepingDamageSource) {
+            DamageSource sweepingDamageSource,
+            float cooledStrength) {
         super(player);
         this.targetEntity = targetEntity;
         this.baseDamage = baseDamage;
@@ -50,6 +52,7 @@ public class RLCombatSweepEvent extends PlayerEvent {
         this.sweepModifier = sweepModifier;
         this.sweepingAABB = sweepingAABB;
         this.sweepingDamageSource = sweepingDamageSource;
+        this.cooledStrength = cooledStrength;
     }
 
     public Entity getTargetEntity() { return this.targetEntity; }
@@ -66,4 +69,8 @@ public class RLCombatSweepEvent extends PlayerEvent {
     public void setSweepingAABB(AxisAlignedBB sweepingAABB) { this.sweepingAABB = sweepingAABB; }
     public DamageSource getSweepingDamageSource() { return this.sweepingDamageSource; }
     public void setSweepingDamageSource(DamageSource sweepingDamageSource) { this.sweepingDamageSource = sweepingDamageSource; }
+    
+    public float getCooledStrength() {
+        return this.cooledStrength;
+    }
 }
