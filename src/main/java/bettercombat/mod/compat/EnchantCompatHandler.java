@@ -37,16 +37,6 @@ public abstract class EnchantCompatHandler {
 	public static float sweepingCooledStrength = 1.0F;
 	
 	/**
-	 * If getEfficiencyModifier is being triggered from Offhand
-	 */
-	public static boolean efficiencyFromOffhand = false;
-	
-	/**
-	 * The cooldown strength of the attack when triggering getEfficiencyModifier
-	 */
-	public static float efficiencyCooledStrength = 1.0F;
-	
-	/**
 	 * If applyThornEnchantments is being triggered from Offhand
 	 */
 	public static boolean thornsFromOffhand = false;
@@ -65,4 +55,10 @@ public abstract class EnchantCompatHandler {
 	 * The cooldown strength of the attack when triggering applyArthropodEnchantments
 	 */
 	public static float arthropodCooledStrength = 1.0F;
+	
+	/**
+	 * The cooldown strength of the attack when triggering attackEntityFrom
+	 * Offhand check not needed as RLCombat internally swaps offhand to mainhand during attackEntityFrom handling
+	 */
+	public static float attackEntityFromCooledStrength = 1.0F;
 }

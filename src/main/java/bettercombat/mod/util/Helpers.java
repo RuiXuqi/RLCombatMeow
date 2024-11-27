@@ -31,8 +31,6 @@ import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.init.MobEffects;
 import net.minecraft.init.SoundEvents;
 import net.minecraft.inventory.EntityEquipmentSlot;
-import net.minecraft.item.ItemAxe;
-import net.minecraft.item.ItemShield;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.ItemSword;
 import net.minecraft.network.play.server.SPacketEntityVelocity;
@@ -259,6 +257,7 @@ public final class Helpers {
                     double tgtMotionZ = targetEntity.motionZ;
                     boolean attacked;
                     
+                    EnchantCompatHandler.attackEntityFromCooledStrength = cooledStr;
                     if(offhand) {
                         Entity targetEntCap = targetEntity;
                         if(targetEntCap instanceof MultiPartEntityPart) targetEntCap = (Entity)(((MultiPartEntityPart)targetEntCap).parent);
@@ -273,6 +272,7 @@ public final class Helpers {
                             SpartanWeaponryHandler.handleSpartanQuickStrike(weapon, targetEntity);
                         }
                     }
+                    EnchantCompatHandler.attackEntityFromCooledStrength = 1.0F;
                     
                     if(attacked) {
                         if(knockbackMod > 0) {
@@ -305,6 +305,7 @@ public final class Helpers {
                             DamageSource sweepingDamageSource = sweepResult.getSweepingDamageSource();
                             
                             for(EntityLivingBase living : player.world.getEntitiesWithinAABB(EntityLivingBase.class, sweepingAABB)) {
+                                EnchantCompatHandler.attackEntityFromCooledStrength = cooledStr;
                                 if(living != player && living != targetEntity && !player.isOnSameTeam(living) && player.getDistanceSq(living) < (reach * reach)) {
                                     living.knockBack(player, 0.4F, MathHelper.sin(player.rotationYaw * 0.017453292F), -MathHelper.cos(player.rotationYaw * 0.017453292F));
                                     if(offhand) {
@@ -319,6 +320,7 @@ public final class Helpers {
                                         }
                                     }
                                 }
+                                EnchantCompatHandler.attackEntityFromCooledStrength = 1.0F;
                             }
                             player.world.playSound(null, player.posX, player.posY, player.posZ, SoundEvents.ENTITY_PLAYER_ATTACK_SWEEP, player.getSoundCategory(), 1.0F, 1.0F);
                             player.spawnSweepParticles();
@@ -359,28 +361,6 @@ public final class Helpers {
 
                         if(cMod > 0.0F) {
                             player.onEnchantmentCritical(targetEntity);
-                        }
-
-                        if(!player.world.isRemote && targetEntity instanceof EntityPlayer) {
-                            EntityPlayer entityplayer = (EntityPlayer)targetEntity;
-                            ItemStack activeItem = entityplayer.isHandActive() ? entityplayer.getActiveItemStack() : ItemStack.EMPTY;
-                            if(weapon.getItem() instanceof ItemAxe && activeItem.getItem() instanceof ItemShield) {
-                                
-                                EnchantCompatHandler.efficiencyFromOffhand = offhand;
-                                EnchantCompatHandler.efficiencyCooledStrength = cooledStr;
-                                float efficiency = 0.25F + EnchantmentHelper.getEfficiencyModifier(player) * 0.05F;
-                                EnchantCompatHandler.efficiencyFromOffhand = false;
-                                EnchantCompatHandler.efficiencyCooledStrength = 1.0F;
-                                
-                                if(knockback) {
-                                    efficiency += 0.75F;
-                                }
-
-                                if(player.getRNG().nextFloat() < efficiency) {
-                                    entityplayer.getCooldownTracker().setCooldown(activeItem.getItem(), 100);
-                                    player.world.setEntityState(entityplayer, (byte) 30);
-                                }
-                            }
                         }
 
                         player.setLastAttackedEntity(targetEntity);

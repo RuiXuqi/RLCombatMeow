@@ -65,7 +65,6 @@ public abstract class EnchantmentHelperMixin {
 			at = @At(value = "INVOKE", target = "Lnet/minecraft/enchantment/EnchantmentHelper;getMaxEnchantmentLevel(Lnet/minecraft/enchantment/Enchantment;Lnet/minecraft/entity/EntityLivingBase;)I")
 	)
 	private static int rlcombat_vanillaEnchantmentHelper_getEfficiencyModifier(Enchantment j, EntityLivingBase entity) {
-		if(EnchantCompatHandler.efficiencyFromOffhand) return EnchantmentHelper.getEnchantmentLevel(j, entity.getHeldItemOffhand());
 		return EnchantmentHelper.getEnchantmentLevel(j, entity.getHeldItemMainhand());
 	}
 	
