@@ -1,4 +1,4 @@
-# RLCombat
-A fork of the Better Combat Rebirth mod for use in the modpack RLCraft
+# RLCombatMeow
+A fork of RLCombat that uses MixinBooter instead of meaningless FermiumBooter.
 
-Original mod: https://www.curseforge.com/minecraft/mc-mods/better-combat-rebirth
+Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli Loli 

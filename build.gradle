@@ -32,6 +32,9 @@ repositories {
     maven {
         url = "https://www.cursemaven.com"
     }
+    maven {
+        url = 'https://maven.cleanroommc.com'
+    }
 }
 
 dependencies {
@@ -46,7 +49,12 @@ dependencies {
     implementation fg.deobf("curse.maven:icenfire-${icenfire_version}")
     implementation fg.deobf("curse.maven:llibrary-${llibrary_version}")
 
-    implementation fg.deobf("curse.maven:fermiumbooter-${fermiumbooter_version}")
+    implementation ("zone.rong:mixinbooter:10.6") {
+        transitive = false
+    }
+    annotationProcessor ("zone.rong:mixinbooter:10.6") {
+        transitive = false
+    }
 
     implementation "org.spongepowered:mixin:0.8.5"
     annotationProcessor "org.spongepowered:mixin:0.8.5:processor"
@@ -63,7 +71,8 @@ processResources {
     filesMatching('mcmod.info') {
         expand 'mod_id': mod_id, 'mod_name': mod_name, 'version': project.version,
                 'mcversion': minecraft_version, 'mod_description': mod_description,
-                'mod_author': mod_author
+                'mod_author': mod_author,
+                'mod_url': mod_url
     }
 }
 

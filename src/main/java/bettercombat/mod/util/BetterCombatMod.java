@@ -16,7 +16,7 @@ import org.apache.logging.log4j.Logger;
         version=Reference.VERSION,
         acceptedMinecraftVersions="[1.12.2]",
         dependencies = "required-after:reachfix;" +
-                "required-after:fermiumbooter;" +
+                "required-after:mixinbooter;" +
                 "after:qualitytools;" +
                 "after:iceandfire")
 public class BetterCombatMod {
