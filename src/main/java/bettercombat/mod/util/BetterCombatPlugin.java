@@ -1,7 +1,7 @@
 package bettercombat.mod.util;
 
 import net.minecraftforge.fml.relauncher.IFMLLoadingPlugin;
-import zone.rong.mixinbooter.ILateMixinLoader;
+import zone.rong.mixinbooter.IEarlyMixinLoader;
 
 import javax.annotation.Nullable;
 import java.util.Collections;
@@ -10,7 +10,7 @@ import java.util.Map;
 
 @IFMLLoadingPlugin.Name("BetterCombat")
 @IFMLLoadingPlugin.MCVersion("1.12.2")
-public class BetterCombatPlugin implements IFMLLoadingPlugin, ILateMixinLoader {
+public class BetterCombatPlugin implements IFMLLoadingPlugin, IEarlyMixinLoader {
 
     public BetterCombatPlugin() {
     }
